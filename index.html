@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Japan Adventurer — requirements capture (prototype)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#16202B;
+  --ink-2:#4A5A68;
+  --ink-3:#8296A3;
+  --paper:#EDF1F0;
+  --card:#FBFCFC;
+  --indigo:#1F4E6B;
+  --indigo-soft:#E2EBF0;
+  --sea:#4E8C7D;
+  --ochre:#B4762A;
+  --ochre-soft:#FBF2E4;
+  --flag:#A23B2E;
+  --flag-soft:#FBEDEB;
+  --rule:#D3DCDA;
+  --rule-hard:#B6C4C2;
+  --shadow:0 1px 0 var(--rule), 0 2px 10px rgba(22,32,43,.04);
+  --display:'Archivo',system-ui,sans-serif;
+  --body:'Source Serif 4',Georgia,serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--body);font-size:17px;line-height:1.55;
+}
+h1,h2,h3,.u-display{font-family:var(--display);letter-spacing:-.01em}
+.mono{font-family:var(--mono);font-size:12.5px;letter-spacing:-.01em}
+
+/* ---------- chrome ---------- */
+.topbar{
+  position:sticky;top:0;z-index:40;background:var(--ink);color:#EDF1F0;
+  border-bottom:1px solid #0E1620;
+}
+.topbar-in{
+  max-width:1220px;margin:0 auto;padding:11px 22px;
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+}
+.brand{
+  font-family:var(--display);font-weight:700;font-size:12px;
+  text-transform:uppercase;letter-spacing:.16em;
+}
+.brand span{display:block;font-weight:500;font-size:9.5px;color:#8AA3B2;letter-spacing:.2em}
+.topbar-note{
+  font-family:var(--mono);font-size:11.5px;color:#8AA3B2;margin-left:auto;
+}
+.pill{
+  font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:2px;
+  border:1px solid #35485A;color:#B9CCD6;white-space:nowrap;
+}
+.pill.live{border-color:var(--sea);color:#9AD0BF}
+.pill.demo{border-color:var(--ochre);color:#E3BC85}
+
+/* ---------- layout ---------- */
+.wrap{max-width:1220px;margin:0 auto;padding:0 22px 90px;
+  display:grid;grid-template-columns:minmax(0,1fr) 336px;gap:34px;align-items:start}
+.masthead{grid-column:1/-1;padding:44px 0 26px;border-bottom:1px solid var(--rule-hard)}
+.eyebrow{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);
+  text-transform:uppercase;letter-spacing:.13em;margin:0 0 12px}
+.masthead h1{margin:0;font-size:clamp(28px,4.4vw,44px);font-weight:600;line-height:1.08;max-width:20ch}
+.masthead p{margin:14px 0 0;max-width:60ch;color:var(--ink-2);font-size:17px}
+
+/* ---------- form column ---------- */
+.sheet{padding-top:8px}
+.section{margin:0 0 6px;border:0;padding:0}
+.section-head{
+  display:flex;align-items:baseline;gap:12px;
+  padding:26px 0 10px;border-bottom:1px solid var(--rule);margin-bottom:6px;
+}
+.section-idx{font-family:var(--mono);font-size:11.5px;color:var(--indigo);letter-spacing:.06em}
+.section-head h2{margin:0;font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.09em}
+.section-count{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+
+.q{
+  background:var(--card);border:1px solid var(--rule);border-radius:3px;
+  padding:18px 20px;margin:9px 0;box-shadow:var(--shadow);
+  animation:qIn .34s cubic-bezier(.2,.7,.3,1) both;
+}
+@keyframes qIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+.q.is-flagged{border-color:var(--flag);background:var(--flag-soft)}
+.q-key{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);display:block;margin-bottom:6px}
+.q-label{display:block;font-weight:600;font-size:17.5px;line-height:1.35}
+.q-label .req{color:var(--indigo);font-weight:400}
+.q-hint{margin:5px 0 0;font-size:14.5px;color:var(--ink-2);line-height:1.45}
+
+/* controls */
+.opts{display:flex;flex-direction:column;gap:7px;margin-top:14px}
+.opts.is-wide{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.opt{
+  display:flex;align-items:flex-start;gap:10px;padding:10px 13px;
+  border:1px solid var(--rule-hard);border-radius:2px;background:#fff;
+  cursor:pointer;font-size:16px;line-height:1.35;transition:border-color .12s,background .12s;
+}
+.opt:hover{border-color:var(--indigo)}
+.opt input{margin:3px 0 0;accent-color:var(--indigo);flex:none}
+.opt.is-on{border-color:var(--indigo);background:var(--indigo-soft);box-shadow:inset 0 0 0 1px var(--indigo)}
+input[type=text],input[type=email],input[type=date],input[type=month],textarea{
+  width:100%;margin-top:13px;padding:10px 12px;font-family:var(--body);font-size:16.5px;
+  color:var(--ink);background:#fff;border:1px solid var(--rule-hard);border-radius:2px;
+}
+textarea{min-height:84px;resize:vertical;line-height:1.5}
+input:focus-visible,textarea:focus-visible,.opt:focus-within,button:focus-visible{
+  outline:2px solid var(--indigo);outline-offset:2px
+}
+.counter{display:flex;align-items:center;gap:0;margin-top:14px;width:max-content;
+  border:1px solid var(--rule-hard);border-radius:2px;overflow:hidden;background:#fff}
+.counter button{
+  width:42px;height:42px;border:0;background:#fff;cursor:pointer;
+  font-family:var(--display);font-size:19px;color:var(--indigo);
+}
+.counter button:hover{background:var(--indigo-soft)}
+.counter output{width:56px;text-align:center;font-family:var(--mono);font-size:16px;
+  border-left:1px solid var(--rule);border-right:1px solid var(--rule);line-height:42px}
+.rooms{display:grid;gap:9px;margin-top:14px;grid-template-columns:repeat(auto-fit,minmax(168px,1fr))}
+.room{border:1px solid var(--rule-hard);border-radius:2px;padding:11px 12px;background:#fff}
+.room-name{font-family:var(--display);font-size:12px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.07em;display:block}
+.room-sub{font-size:13px;color:var(--ink-3);display:block;margin:1px 0 6px}
+.room .counter{margin-top:0}
+.capacity{margin-top:12px;font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+.capacity.is-bad{color:var(--flag);font-weight:500}
+
+/* notice card */
+.q.is-notice{background:var(--indigo-soft);border-color:var(--indigo)}
+.q.is-notice .q-label{font-size:16px}
+.q.is-notice p{margin:6px 0 0;font-size:15.5px;color:var(--ink-2)}
+
+/* ---------- the AI layer: ochre, and only ochre ---------- */
+.ask{
+  margin-top:14px;display:inline-flex;align-items:center;gap:8px;
+  background:transparent;border:1px dashed var(--ochre);border-radius:2px;
+  padding:7px 12px;cursor:pointer;color:var(--ochre);
+  font-family:var(--display);font-size:13px;font-weight:600;
+}
+.ask:hover{background:var(--ochre-soft)}
+.ask::before{content:"";width:7px;height:7px;background:var(--ochre);flex:none}
+.ai{
+  margin-top:13px;border-left:3px solid var(--ochre);background:var(--ochre-soft);
+  padding:13px 15px;animation:aiIn .3s ease both;
+}
+@keyframes aiIn{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:none}}
+.ai-tag{font-family:var(--mono);font-size:10.5px;color:var(--ochre);
+  text-transform:uppercase;letter-spacing:.11em;display:block;margin-bottom:6px}
+.ai-body{font-size:16px;line-height:1.5;white-space:pre-wrap}
+.ai-body p{margin:0 0 9px}
+.ai-body p:last-child{margin:0}
+.ai-fill{
+  margin-top:11px;background:var(--ochre);border:0;color:#fff;padding:7px 13px;
+  border-radius:2px;cursor:pointer;font-family:var(--display);font-size:13px;font-weight:600;
+}
+.ai-fill:hover{background:#9C6522}
+.ai-thinking{font-family:var(--mono);font-size:12.5px;color:var(--ochre)}
+.ai-thinking::after{content:"";animation:dots 1.1s steps(4,end) infinite}
+@keyframes dots{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
+.flagbox{
+  margin-top:13px;border-left:3px solid var(--flag);background:var(--flag-soft);padding:12px 15px;
+}
+.flagbox .ai-tag{color:var(--flag)}
+
+/* ---------- rail: the signature ---------- */
+.rail{position:sticky;top:74px;display:flex;flex-direction:column;gap:12px}
+.panel{background:var(--card);border:1px solid var(--rule);border-radius:3px;box-shadow:var(--shadow)}
+.panel-head{
+  padding:11px 14px;border-bottom:1px solid var(--rule);
+  font-family:var(--display);font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.13em;color:var(--ink-2);display:flex;align-items:center;gap:9px;
+}
+.panel-head .n{margin-left:auto;font-family:var(--mono);font-size:11.5px;letter-spacing:0;color:var(--ink-3)}
+.panel-body{padding:12px 14px}
+
+.route{list-style:none;margin:0;padding:0}
+.route li{display:flex;align-items:center;gap:10px;padding:5px 0;font-size:14.5px;color:var(--ink-2)}
+.route .dot{width:8px;height:8px;border:1px solid var(--rule-hard);border-radius:50%;flex:none;background:#fff}
+.route li.done{color:var(--ink)}
+.route li.done .dot{background:var(--sea);border-color:var(--sea)}
+.route li.part .dot{background:linear-gradient(90deg,var(--sea) 50%,#fff 50%);border-color:var(--sea)}
+.route li .c{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+
+.hidden-panel{border-color:var(--rule-hard)}
+.hidden-panel .panel-head{color:var(--indigo)}
+.skips{list-style:none;margin:0;padding:0}
+.skips li{
+  font-size:14px;color:var(--ink-3);padding:3px 0;line-height:1.35;
+  text-decoration:line-through;text-decoration-color:var(--flag);
+  text-decoration-thickness:1px;
+  animation:strike .4s ease both;
+}
+@keyframes strike{from{opacity:0;transform:translateX(7px)}to{opacity:.95;transform:none}}
+.skips-empty{font-size:14px;color:var(--ink-3);margin:0}
+.skips-why{margin:11px 0 0;padding-top:10px;border-top:1px dotted var(--rule-hard);
+  font-size:13.5px;color:var(--ink-2)}
+
+.data{margin:0;font-family:var(--mono);font-size:12px;line-height:1.65;
+  max-height:230px;overflow:auto}
+.data div{display:flex;gap:8px}
+.data .k{color:var(--indigo);flex:none}
+.data .v{color:var(--ink);word-break:break-word}
+.data-empty{font-family:var(--body);font-size:14px;color:var(--ink-3);margin:0}
+
+/* ---------- submit + handoff ---------- */
+.actions{margin:30px 0 0;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.send{
+  background:var(--indigo);color:#fff;border:0;border-radius:2px;padding:14px 26px;
+  font-family:var(--display);font-size:15px;font-weight:600;cursor:pointer;
+}
+.send:hover{background:#183F57}
+.send[disabled]{background:var(--ink-3);cursor:not-allowed}
+.actions .why{font-size:14.5px;color:var(--ink-2);max-width:40ch}
+.handoff{margin-top:24px;border:1px solid var(--ink);border-radius:3px;background:#fff;overflow:hidden}
+.handoff-head{background:var(--ink);color:#EDF1F0;padding:13px 18px}
+.handoff-head h2{margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.12em}
+.handoff-head p{margin:5px 0 0;font-size:14px;color:#9FB6C2}
+.handoff-body{padding:18px}
+.score{display:flex;align-items:baseline;gap:12px;margin:0 0 16px}
+.score-n{font-family:var(--display);font-size:40px;font-weight:700;line-height:1}
+.score-l{font-size:14.5px;color:var(--ink-2)}
+.bar{height:5px;background:var(--rule);border-radius:3px;overflow:hidden;margin:0 0 18px}
+.bar i{display:block;height:100%;background:var(--sea)}
+.handoff h3{font-size:11.5px;font-family:var(--display);font-weight:700;text-transform:uppercase;
+  letter-spacing:.12em;color:var(--ink-2);margin:20px 0 8px}
+pre.json{
+  margin:0;background:#121A23;color:#CFE0E6;padding:15px;border-radius:2px;
+  font-family:var(--mono);font-size:12px;line-height:1.6;overflow:auto;max-height:340px;
+}
+.reply{border-left:3px solid var(--ochre);background:var(--ochre-soft);padding:14px 16px;
+  font-size:16px;line-height:1.55;white-space:pre-wrap}
+
+/* ---------- notes for Rod and Nagi ---------- */
+.notes{grid-column:1/-1;margin-top:56px;padding-top:26px;border-top:2px solid var(--ink)}
+.notes h2{font-size:13px;text-transform:uppercase;letter-spacing:.12em;margin:0 0 4px}
+.notes .sub{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin:0 0 20px}
+.notegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));gap:16px}
+.note{background:var(--card);border:1px solid var(--rule);border-radius:3px;padding:16px 17px}
+.note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ochre);display:block;margin-bottom:7px}
+.note h3{margin:0 0 7px;font-size:16.5px;font-weight:600;font-family:var(--display)}
+.note p{margin:0;font-size:15px;color:var(--ink-2);line-height:1.5}
+.disclaim{margin:26px 0 0;font-size:14px;color:var(--ink-3);max-width:78ch}
+
+@media (max-width:940px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:0}
+  .rail{position:static;order:-1;margin:20px 0 0}
+  .masthead{padding-top:30px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<!-- The backend lives in n8n; this page is the whole front end and is hosted on
+     GitHub Pages. The endpoint is the default so the plain Pages URL works with
+     no query string. ?api=... still overrides it for testing another instance. -->
+<script>window.JA_DEFAULT_API='https://n8n.seichodigital.com/webhook/ja-form';</script>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand">Japan Adventurer<span>Requirements capture</span></div>
+    <span class="pill" id="mode-pill">checking backend…</span>
+    <span class="topbar-note">Prototype — not a live enquiry form</span>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="masthead">
+    <p class="eyebrow">Prototype · flow <span id="fv"></span> · Claude Sonnet</p>
+    <h1 id="page-title"></h1>
+    <p id="page-intro"></p>
+  </div>
+
+  <main class="sheet">
+    <div id="form"></div>
+    <div class="actions">
+      <button class="send" id="send" disabled>Send this to Japan Adventurer</button>
+      <span class="why" id="send-why"></span>
+    </div>
+    <div id="handoff"></div>
+  </main>
+
+  <aside class="rail">
+    <div class="panel">
+      <div class="panel-head">Where you are <span class="n" id="asked-n"></span></div>
+      <div class="panel-body"><ul class="route" id="route"></ul></div>
+    </div>
+
+    <div class="panel hidden-panel">
+      <div class="panel-head">Not asked <span class="n" id="skip-n">0</span></div>
+      <div class="panel-body">
+        <ul class="skips" id="skips"></ul>
+        <p class="skips-empty" id="skips-empty">Everything in the question set still applies. Choose a trip shape and watch this fill.</p>
+        <p class="skips-why" id="skips-why" hidden></p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">What Nagi receives</div>
+      <div class="panel-body">
+        <div class="data" id="data"></div>
+        <p class="data-empty" id="data-empty">Nothing captured yet.</p>
+      </div>
+    </div>
+  </aside>
+
+  <section class="notes">
+    <h2>What this prototype is arguing</h2>
+    <p class="sub">For Rod and Nagi — four claims, each demonstrable above</p>
+    <div class="notegrid">
+      <div class="note">
+        <span class="tag">One size fits all</span>
+        <h3>Questions are conditional, not fixed</h3>
+        <p>Choose a single day out and the multi-day questions are struck out on the right, with a count. The same engine serves both, so there is one form to maintain rather than one per tour type.</p>
+      </div>
+      <div class="note">
+        <span class="tag">Blank fields</span>
+        <h3>The form answers back</h3>
+        <p>Anywhere marked in ochre, a customer can ask about the question instead of guessing or skipping. The reply can also fill the field in for them.</p>
+      </div>
+      <div class="note">
+        <span class="tag">Unbookable answers</span>
+        <h3>Answers are checked before they arrive</h3>
+        <p>Room allocation is counted against group size. The old form asked for single, double and twin in one text box; a test response answered it with the number two.</p>
+      </div>
+      <div class="note">
+        <span class="tag">Handover</span>
+        <h3>Structured output, with a completeness score</h3>
+        <p>Sending produces a record ready for the pipeline sheet plus a note on what is still unknown, so it is clear at a glance whether an enquiry can be quoted or needs a reply first.</p>
+      </div>
+    </div>
+    <p class="disclaim" id="disclaim"></p>
+  </section>
+</div>
+
+<script src="flow.js"></script>
+<script>
+/* =====================================================================
+   Japan Adventurer — requirements capture prototype
+   ---------------------------------------------------------------------
+   Engine only. Questions live in flow.js.
+
+   Backend: pass an n8n webhook as ?api=https://...  Without it the page
+   runs on the canned replies in DEMO_REPLIES so a demo can never be
+   killed by a failed API call.
+   ===================================================================== */
+
+const FLOW = window.JA_FLOW;
+const API  = new URLSearchParams(location.search).get('api') || window.JA_DEFAULT_API || '';
+const state = { answers:{}, ai:{}, flags:{}, busy:{}, sent:false };
+
+/* ---------------------------------------------------------------------
+   DEMO CONTENT — replaces the model when no backend is attached.
+   Max: these are placeholder replies for the demo only. Verify the
+   operational detail before any of this is shown to a real customer.
+   --------------------------------------------------------------------- */
+const DEMO_REPLIES = {
+  sd_base:
+    "For a single day out, what matters is that you start within about an hour of the meeting point, so where you sleep the night before decides what the day can include.\n\nOn Shikoku, Matsuyama and Takamatsu are the two easiest bases: both have airports, both have a reasonable choice of hotels, and both put you in reach of coast and mountains on the same day.\n\nIf you are coming from Honshu the night before, Okayama works as well, since the train across the Seto bridge is short.",
+  md_airport_help:
+    "Since your flights are open, treat the airports as an output of the itinerary rather than an input.\n\nAs a rule: fly into one end of the route and out of the other, rather than doubling back. For a Shikoku and Setouchi trip that usually means arriving at Kansai or Matsuyama and leaving from Takamatsu or Hiroshima.\n\nTell us the regions and the number of nights and we will give you the pairing to book against.",
+  md_regions:
+    "Two to three regions in ten nights is comfortable. Four or more and the itinerary becomes transport with stops in it.\n\nShikoku and the Setouchi islands sit together well because the ferries are short. Adding the Japan Alps to that means a long transfer day that buys you very little.\n\nIf you want the cities as well, it is usually better to bolt them on at the start or the end and leave them out of the routed section.",
+  md_season:
+    "Late April to early June, and October to mid-November, give the most reliable conditions for being outdoors, with mild temperatures and lower rainfall.\n\nJune to mid-July is the rainy season. August is hot and humid, and demanding on a walking or cycling itinerary.\n\nIf quieter roads matter more than conditions, early December is worth a look: cold but clear, and very few visitors.",
+  md_room_style:
+    "A Japanese-style room has tatami flooring and a futon laid out on it in the evening, rather than a standing bed. Rooms are usually larger than the equivalent Western room and often have a low table and a view.\n\nIn smaller places and in ryokan it is frequently the only option, so ruling it out entirely narrows where we can put you.\n\nIf getting up from floor level is a concern, we can mix: a few nights on tatami and beds elsewhere.",
+  md_category:
+    "Standards do not map onto star ratings once you leave the cities.\n\nSimple and clean means a well-kept business hotel or a family-run inn: small room, reliable, nothing extra. Comfortable and well-run means space, good food and a proper welcome, which in rural Japan usually means a ryokan rather than a hotel. Upper end exists in the region but is thin on the ground, so on a routed itinerary it can only be delivered on some nights.\n\nMixed is what most itineraries end up as, taking the best available in each place.",
+  unsure_help:
+    "The dividing line is whether you need accommodation from us.\n\nIf you are already staying somewhere and want one guided day, that is a single day out: we need the date, where you are staying, and what you want the day built around.\n\nIf you want the route, the overnight stops and the transfers arranged, that is an itinerary, and the questions get longer because they have to.",
+  _default:
+    "Answer as much as you can and leave the rest. We will follow up on anything that is still open rather than expecting you to work it out here."
+};
+
+const DEMO_FILL = {
+  sd_base:"Matsuyama",
+  md_season:"weather",
+  md_room_style:"some",
+  md_category:"mixed"
+};
+
+/* ---------------------------------------------------------------------
+   showIf evaluation
+   --------------------------------------------------------------------- */
+function truthy(v){
+  if(v===undefined||v===null) return false;
+  if(Array.isArray(v)) return v.length>0;
+  if(typeof v==='object') return Object.values(v).some(n=>Number(n)>0);
+  return String(v).trim()!=='';
+}
+function testCond(c,a){
+  const v=a[c.q];
+  if('answered' in c) return truthy(v)===c.answered;
+  if('eq'  in c) return v===c.eq;
+  if('in'  in c) return c.in.includes(v);
+  if('has' in c) return Array.isArray(v)&&v.includes(c.has);
+  if('hasAny' in c) return Array.isArray(v)&&c.hasAny.some(x=>v.includes(x));
+  if('gt'  in c) return Number(v||0)>c.gt;
+  return false;
+}
+function visible(q,a){
+  if(!q.showIf) return true;
+  const {all,any}=q.showIf;
+  if(all&&!all.every(c=>testCond(c,a))) return false;
+  if(any&&!any.some(c=>testCond(c,a))) return false;
+  return true;
+}
+const isInput = q => q.type!=='notice';
+
+/* ---------------------------------------------------------------------
+   local validation — mirrors what the backend checks, so the demo still
+   catches errors offline
+   --------------------------------------------------------------------- */
+function roomCapacity(r){
+  r=r||{};
+  return (Number(r.single||0)*1)+(Number(r.double||0)*2)+(Number(r.twin||0)*2)+(Number(r.triple||0)*3);
+}
+function localFlags(a){
+  const f={};
+  const head=Number(a.adults||0)+Number(a.children||0);
+  if(a.md_rooms&&head>0){
+    const cap=roomCapacity(a.md_rooms);
+    const rooms=Object.values(a.md_rooms).reduce((s,n)=>s+Number(n||0),0);
+    if(rooms>0&&cap!==head){
+      f.md_rooms = cap<head
+        ? `That allocation sleeps ${cap}, and there are ${head} of you. ${head-cap} without a bed.`
+        : `That allocation sleeps ${cap}, and there are ${head} of you. ${cap-head} bed spaces you would be paying for.`;
+    }
+  }
+  const routed=(a.md_regions||[]).filter(r=>!['open','cities'].includes(r));
+  const nights=Number(a.md_nights||0);
+  if(routed.length>=3&&nights>0&&nights<routed.length*3){
+    f.md_regions=`${routed.length} regions in ${nights} nights averages under three nights each, which is mostly transfer time. Worth cutting one.`;
+  }
+  return f;
+}
+
+/* ---------------------------------------------------------------------
+   backend
+   --------------------------------------------------------------------- */
+let LIVE=false, PROBED=false;
+async function callAI(action,payload){
+  if(!API) return null;
+  const ctl=new AbortController();
+  const t=setTimeout(()=>ctl.abort(),25000);
+  try{
+    const r=await fetch(API,{
+      method:'POST',
+      // text/plain is a CORS-safelisted content type, so the browser issues no
+      // preflight OPTIONS at all. The body is still JSON; the n8n Build node
+      // parses it. This is what lets a GitHub Pages origin call the n8n webhook
+      // cross-origin without depending on preflight handling.
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify(Object.assign({action,flow_version:FLOW.version},payload)),
+      signal:ctl.signal
+    });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    LIVE=true; PROBED=true; paintMode();
+    return j.data!==undefined?j.data:j;
+  }catch(e){
+    console.warn('[ja_form] backend unavailable, using demo replies:',e.message);
+    LIVE=false; PROBED=true; paintMode();
+    return null;
+  }finally{clearTimeout(t)}
+}
+function paintMode(){
+  const p=document.getElementById('mode-pill');
+  if(!API){p.className='pill demo';p.textContent='Demo replies — no backend attached';return}
+  if(!PROBED){p.className='pill';p.textContent='Backend attached — not called yet';return}
+  p.className='pill '+(LIVE?'live':'demo');
+  p.textContent=LIVE?'Live — Claude Sonnet via n8n':'Backend not responding — demo replies';
+}
+
+async function askAbout(q){
+  state.busy[q.id]=true; render();
+  const data=await callAI('assist',{
+    question_id:q.id,
+    question:{id:q.id,label:q.label,hint:q.hint||'',type:q.type,options:q.options||null},
+    answers:state.answers
+  });
+  state.busy[q.id]=false;
+  if(data&&data.answer){
+    state.ai[q.id]={text:data.answer,fill:data.suggested_value??null};
+  }else{
+    state.ai[q.id]={
+      text:DEMO_REPLIES[q.id]||DEMO_REPLIES._default,
+      fill:DEMO_FILL[q.id]??null
+    };
+  }
+  render();
+}
+
+/* ---------------------------------------------------------------------
+   answer setting
+   --------------------------------------------------------------------- */
+function set(id,v){
+  state.answers[id]=v;
+  // clear answers to questions that just went out of scope
+  FLOW.questions.forEach(q=>{
+    if(isInput(q)&&!visible(q,state.answers)&&state.answers[q.id]!==undefined){
+      delete state.answers[q.id]; delete state.ai[q.id];
+    }
+  });
+  state.flags=localFlags(state.answers);
+  state.sent=false;
+  render();
+}
+function toggleMulti(id,v){
+  const cur=Array.isArray(state.answers[id])?state.answers[id].slice():[];
+  const i=cur.indexOf(v);
+  if(i>=0)cur.splice(i,1); else cur.push(v);
+  set(id,cur);
+}
+function bumpRoom(id,key,d,min){
+  const cur=Object.assign({single:0,double:0,twin:0,triple:0},state.answers[id]||{});
+  cur[key]=Math.max(min,Number(cur[key]||0)+d);
+  set(id,cur);
+}
+
+/* ---------------------------------------------------------------------
+   render
+   --------------------------------------------------------------------- */
+function el(tag,cls,html){
+  const n=document.createElement(tag);
+  if(cls)n.className=cls;
+  if(html!==undefined)n.innerHTML=html;
+  return n;
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function paras(t){return String(t).split(/\n{2,}/).map(p=>`<p>${esc(p)}</p>`).join('')}
+
+function render(){
+  const a=state.answers;
+  const shown=FLOW.questions.filter(q=>visible(q,a));
+  const form=document.getElementById('form');
+  form.textContent='';
+
+  FLOW.sections.forEach((sec,si)=>{
+    const qs=shown.filter(q=>q.section===sec.id);
+    if(!qs.length) return;
+    const fs=el('fieldset','section');
+    const head=el('div','section-head');
+    head.append(
+      el('span','section-idx',String(si+1).padStart(2,'0')),
+      el('h2',null,esc(sec.label)),
+      el('span','section-count',qs.filter(isInput).length+(qs.filter(isInput).length===1?' question':' questions'))
+    );
+    fs.append(head);
+    qs.forEach(q=>fs.append(card(q)));
+    form.append(fs);
+  });
+
+  paintRail(shown);
+  paintSend(shown);
+  if(state.sent) paintHandoff(shown);
+}
+
+function card(q){
+  const a=state.answers, v=a[q.id];
+  const c=el('div','q'+(q.type==='notice'?' is-notice':'')+(state.flags[q.id]?' is-flagged':''));
+  c.dataset.q=q.id;
+
+  if(q.type!=='notice') c.append(el('span','q-key',esc(q.id)));
+  c.append(el('span','q-label',esc(q.label)+(q.required?' <span class="req">*</span>':'')));
+  if(q.hint) c.append(el('p','q-hint',esc(q.hint)));
+  if(q.body) c.append(el('p',null,esc(q.body)));
+
+  if(q.type==='choice'){
+    const box=el('div','opts'+(q.options.length>4?' is-wide':''));
+    q.options.forEach(o=>{
+      const lab=el('label','opt'+(v===o.value?' is-on':''));
+      const inp=el('input');inp.type='radio';inp.name=q.id;inp.checked=v===o.value;
+      inp.addEventListener('change',()=>set(q.id,o.value));
+      lab.append(inp,el('span',null,esc(o.label)));
+      box.append(lab);
+    });
+    c.append(box);
+  }
+
+  if(q.type==='multi'){
+    const box=el('div','opts'+(q.options.length>4?' is-wide':''));
+    q.options.forEach(o=>{
+      const on=Array.isArray(v)&&v.includes(o.value);
+      const lab=el('label','opt'+(on?' is-on':''));
+      const inp=el('input');inp.type='checkbox';inp.checked=on;
+      inp.addEventListener('change',()=>toggleMulti(q.id,o.value));
+      lab.append(inp,el('span',null,esc(o.label)));
+      box.append(lab);
+    });
+    c.append(box);
+  }
+
+  if(q.type==='text'||q.type==='longtext'||q.type==='date'||q.type==='month'){
+    const f=q.type==='longtext'?el('textarea'):el('input');
+    if(q.type!=='longtext') f.type=q.type==='text'?'text':q.type;
+    f.value=v||''; if(q.placeholder)f.placeholder=q.placeholder;
+    f.setAttribute('aria-label',q.label);
+    f.addEventListener('change',e=>set(q.id,e.target.value));
+    c.append(f);
+  }
+
+  if(q.type==='counter'){
+    const n=v===undefined?(q.default??0):Number(v);
+    if(v===undefined) state.answers[q.id]=n;
+    const box=el('div','counter');
+    const dec=el('button',null,'&minus;'), out=el('output',null,String(n)), inc=el('button',null,'+');
+    dec.type=inc.type='button';
+    dec.setAttribute('aria-label','Fewer'); inc.setAttribute('aria-label','More');
+    dec.addEventListener('click',()=>set(q.id,Math.max(q.min??0,n-1)));
+    inc.addEventListener('click',()=>set(q.id,Math.min(q.max??99,n+1)));
+    box.append(dec,out,inc);
+    c.append(box);
+  }
+
+  if(q.type==='rooms'){
+    const r=Object.assign({single:0,double:0,twin:0,triple:0},v||{});
+    const grid=el('div','rooms');
+    [['single','Single','one bed, one person'],
+     ['double','Double','one large bed'],
+     ['twin','Twin','two separate beds'],
+     ['triple','Triple','three beds, limited availability']].forEach(([k,name,sub])=>{
+      const box=el('div','room');
+      box.append(el('span','room-name',name),el('span','room-sub',sub));
+      const ctr=el('div','counter');
+      const d=el('button',null,'&minus;'),o=el('output',null,String(r[k])),i=el('button',null,'+');
+      d.type=i.type='button';
+      d.setAttribute('aria-label','Fewer '+name.toLowerCase()+' rooms');
+      i.setAttribute('aria-label','More '+name.toLowerCase()+' rooms');
+      d.addEventListener('click',()=>bumpRoom(q.id,k,-1,0));
+      i.addEventListener('click',()=>bumpRoom(q.id,k,1,0));
+      ctr.append(d,o,i); box.append(ctr); grid.append(box);
+    });
+    c.append(grid);
+    const head=Number(a.adults||0)+Number(a.children||0);
+    const cap=roomCapacity(r);
+    const cl='capacity'+(cap!==head&&cap>0?' is-bad':'');
+    c.append(el('p',cl,`sleeps ${cap} / group of ${head}`));
+  }
+
+  if(state.flags[q.id]){
+    const fb=el('div','flagbox');
+    fb.append(el('span','ai-tag','Checked before sending'),el('div','ai-body',esc(state.flags[q.id])));
+    c.append(fb);
+  }
+
+  if(q.assist||q.help){
+    if(q.assist){
+      const b=el('button','ask',esc(q.assistLabel||'Ask about this'));
+      b.type='button';
+      b.addEventListener('click',()=>askAbout(q));
+      c.append(b);
+    }
+    if(q.help){
+      const h=el('div','ai');
+      h.append(el('span','ai-tag','Why this question behaves like this'),el('div','ai-body',paras(q.help)));
+      c.append(h);
+    }
+  }
+
+  if(state.busy[q.id]){
+    const t=el('div','ai');
+    t.append(el('span','ai-tag','Claude Sonnet'),el('div','ai-thinking','Working it out'));
+    c.append(t);
+  }
+  if(state.ai[q.id]){
+    const ai=state.ai[q.id];
+    const box=el('div','ai');
+    box.append(el('span','ai-tag','Answer'),el('div','ai-body',paras(ai.text)));
+    if(ai.fill!==null&&ai.fill!==undefined){
+      const opt=(q.options||[]).find(o=>o.value===ai.fill);
+      const btn=el('button','ai-fill',
+        'Use this answer'+(opt?': '+esc(opt.label):(typeof ai.fill==='string'?': '+esc(ai.fill):'')));
+      btn.type='button';
+      btn.addEventListener('click',()=>{delete state.ai[q.id];set(q.id,ai.fill)});
+      box.append(btn);
+    }
+    c.append(box);
+  }
+  return c;
+}
+
+function paintRail(shown){
+  const a=state.answers;
+  const inputs=shown.filter(isInput);
+  const answered=inputs.filter(q=>truthy(a[q.id]));
+  document.getElementById('asked-n').textContent=answered.length+' / '+inputs.length;
+
+  const route=document.getElementById('route');
+  route.textContent='';
+  FLOW.sections.forEach(sec=>{
+    const qs=inputs.filter(q=>q.section===sec.id);
+    if(!qs.length) return;
+    const done=qs.filter(q=>truthy(a[q.id])).length;
+    const li=el('li',done===qs.length?'done':(done?'part':''));
+    li.append(el('span','dot'),el('span',null,esc(sec.label)),el('span','c',done+'/'+qs.length));
+    route.append(li);
+  });
+
+  const decided=truthy(a.trip_type)||truthy(a.party_type);
+  const skipped=decided
+    ? FLOW.questions.filter(q=>isInput(q)&&!visible(q,a))
+    : [];
+  const ul=document.getElementById('skips');
+  ul.textContent='';
+  skipped.forEach((q,i)=>{
+    const li=el('li',null,esc(q.label));
+    li.style.animationDelay=(i*22)+'ms';
+    ul.append(li);
+  });
+  document.getElementById('skip-n').textContent=String(skipped.length);
+  document.getElementById('skips-empty').hidden=skipped.length>0;
+
+  const why=document.getElementById('skips-why');
+  if(skipped.length&&a.trip_type){
+    const label={single_day:'a single day out',multi_day:'a multi-day itinerary',unsure:'an undecided enquiry'}[a.trip_type];
+    why.textContent=`${skipped.length} questions do not apply to ${label}. On the current Google Form all of them would still be on screen.`;
+    why.hidden=false;
+  }else{ why.hidden=true }
+
+  const dataBox=document.getElementById('data');
+  dataBox.textContent='';
+  const keys=Object.keys(a).filter(k=>truthy(a[k]));
+  keys.forEach(k=>{
+    const row=el('div');
+    let v=a[k];
+    if(Array.isArray(v)) v=v.join(', ');
+    else if(v&&typeof v==='object') v=Object.entries(v).filter(([,n])=>Number(n)>0).map(([kk,n])=>kk+'×'+n).join(', ')||'—';
+    row.append(el('span','k',esc(k)+':'),el('span','v',esc(v)));
+    dataBox.append(row);
+  });
+  document.getElementById('data-empty').hidden=keys.length>0;
+}
+
+function requiredMissing(shown){
+  return shown.filter(q=>isInput(q)&&q.required&&!truthy(state.answers[q.id]));
+}
+function paintSend(shown){
+  const missing=requiredMissing(shown);
+  const flags=Object.keys(state.flags).length;
+  const btn=document.getElementById('send');
+  const why=document.getElementById('send-why');
+  const noPath=!truthy(state.answers.trip_type);
+  btn.disabled=noPath||missing.length>0;
+  if(noPath){ why.textContent='Choose a trip shape to begin.' }
+  else if(missing.length){ why.textContent=missing.length+' required '+(missing.length===1?'answer is':'answers are')+' still open: '+missing.slice(0,3).map(q=>q.label.toLowerCase()).join('; ')+(missing.length>3?'…':'') }
+  else if(flags){ why.textContent='You can send this, but there '+(flags===1?'is 1 point':'are '+flags+' points')+' worth correcting first.' }
+  else { why.textContent='Nothing outstanding.' }
+}
+
+document.getElementById('send').addEventListener('click',async()=>{
+  state.sent=true; render();
+  const shown=FLOW.questions.filter(q=>visible(q,state.answers));
+  const box=document.getElementById('handoff');
+  const data=await callAI('handoff',{answers:state.answers});
+  if(data&&data.reply) state.reply=data.reply;
+  render();
+  box.scrollIntoView({behavior:'smooth',block:'start'});
+});
+
+function paintHandoff(shown){
+  const a=state.answers;
+  const inputs=shown.filter(isInput);
+  const answered=inputs.filter(q=>truthy(a[q.id])).length;
+  const pct=Math.round(answered/inputs.length*100);
+  const skipped=FLOW.questions.filter(q=>isInput(q)&&!visible(q,a)).length;
+  const flags=Object.entries(state.flags);
+
+  const record={
+    enquiry_id:'JA-DEMO-'+String(Math.abs(hash(JSON.stringify(a)))%9000+1000),
+    received_at:new Date().toISOString(),
+    flow_version:FLOW.version,
+    route:a.trip_type,
+    completeness_pct:pct,
+    questions_asked:inputs.length,
+    questions_skipped:skipped,
+    open_points:flags.map(([k,v])=>({field:k,note:v})),
+    answers:a
+  };
+
+  const box=document.getElementById('handoff');
+  box.textContent='';
+  const wrap=el('div','handoff');
+  const head=el('div','handoff-head');
+  head.append(el('h2',null,'Ready for the pipeline sheet'),
+              el('p',null,'Nothing was sent. This is what the enquiry looks like on arrival.'));
+  const body=el('div','handoff-body');
+
+  const sc=el('div','score');
+  sc.append(el('span','score-n',pct+'%'),
+            el('span','score-l',`complete — ${answered} of ${inputs.length} questions answered, ${skipped} never asked`));
+  const bar=el('div','bar'); const i=el('i'); i.style.width=pct+'%'; bar.append(i);
+  body.append(sc,bar);
+
+  if(flags.length){
+    const f=el('div','flagbox');
+    f.append(el('span','ai-tag','Open points for Nagi'),
+             el('div','ai-body',flags.map(([,v])=>'• '+v).join('\n')));
+    body.append(f);
+  }
+
+  body.append(el('h3',null,'Draft reply to the customer'));
+  const reply=state.reply||demoReply(a,flags);
+  body.append(el('div','reply',esc(reply)));
+
+  body.append(el('h3',null,'Structured record'));
+  body.append(el('pre','json',esc(JSON.stringify(record,null,2))));
+
+  wrap.append(head,body); box.append(wrap);
+}
+
+function demoReply(a,flags){
+  const name=(a.contact_name||'').split(' ')[0]||'there';
+  const head=Number(a.adults||0)+Number(a.children||0);
+  const shape=a.trip_type==='single_day'
+    ? `a guided day on ${a.sd_date||'your chosen date'}, based on ${a.sd_base||'your accommodation'}`
+    : `${a.md_nights||'several'} nights, with ${(a.md_regions||[]).length||'a few'} regions in scope`;
+  let t=`Dear ${name},\n\nThank you for the detail. We have your enquiry for ${head} ${head===1?'traveller':'travellers'}: ${shape}.\n\n`;
+  if(flags.length){
+    t+=`One point to settle before we can price it: ${flags[0][1].replace(/^That allocation/,'the room allocation')}\n\n`;
+  }
+  t+=`We will come back to you with a proposed outline and the practical constraints that apply. If your plans move in the meantime, tell us and we will adjust.\n\nJapan Adventurer`;
+  return t;
+}
+
+function hash(s){let h=0;for(let i=0;i<s.length;i++){h=(h<<5)-h+s.charCodeAt(i);h|=0}return h}
+
+/* boot */
+document.getElementById('page-title').textContent=FLOW.title;
+document.getElementById('page-intro').textContent=FLOW.intro;
+document.getElementById('fv').textContent=FLOW.version;
+document.getElementById('disclaim').textContent=
+  'Prototype for internal review. Nothing entered here is stored or sent. The operational detail in the assistant replies is placeholder content for the demonstration and has not been checked against what Japan Adventurer actually offers.';
+paintMode();
+render();
+</script>
+</body>
+</html>
