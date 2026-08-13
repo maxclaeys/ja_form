@@ -28,6 +28,13 @@ It argues four things, each visible on screen:
    group size; region count is checked against nights.
 4. **The output is structured**, with a completeness score and a draft reply.
 
+The trade branch adds a fifth: **one tree serves very different buyers.** It branches
+on who is asking, how settled their brief already is, and what they want back — not on
+trip type. Purpose is a single question gating four sub-blocks, so a school study tour,
+a sports exchange and a costed luxury itinerary run through the same engine without any
+of them seeing the others' questions. `test_b2b.js` asserts exactly that against three
+real enquiries.
+
 ---
 
 ## Files
@@ -37,6 +44,7 @@ It argues four things, each visible on screen:
 | `index.html` | The whole front end — engine, styling, demo fallbacks. No dependencies. |
 | `flow.js` | Every question, and the conditions that show it. **Edit here, not in the engine.** |
 | `n8n-workflow.json` | Reference copy of the backend as it is live. Not deployed from here. |
+| `test_b2b.js` | Coverage test for the B2B branch. `node test_b2b.js`. Uses the real `showIf` evaluator copied from `index.html`. |
 
 ## Run it
 
@@ -133,9 +141,12 @@ any of it.
 
 ## Not built
 
-- **B2B / trade branch.** Deliberately a stub. Group requirements vary too widely for
-  a decision tree; the right shape is a coverage checklist with the model interviewing
-  against the gaps, in any order the customer volunteers information. Different build.
+- **Pre-fill from the pasted brief.** `b_brief_paste` collects the itinerary or RFP
+  the customer has already written, but nothing yet reads it. The intended behaviour
+  is to send it with the question set, have the model propose answers with a
+  confidence per field, and show them pre-filled and marked as read from the brief so
+  the customer corrects rather than retypes. This is what makes the B2B path
+  reasonable to complete; without it the trade branch is a long form.
 - **Grounding in real content.** The assistant answers from the prompt, not from
   japanadventurer.com. The `clean_content` column the WP extraction pipeline already
   produces is the retrieval source when this becomes real.

@@ -545,13 +545,15 @@ function render(){
   const form=document.getElementById('form');
   form.textContent='';
 
-  FLOW.sections.forEach((sec,si)=>{
+  let si=0;
+  FLOW.sections.forEach(sec=>{
     const qs=shown.filter(q=>q.section===sec.id);
     if(!qs.length) return;
+    si++;
     const fs=el('fieldset','section');
     const head=el('div','section-head');
     head.append(
-      el('span','section-idx',String(si+1).padStart(2,'0')),
+      el('span','section-idx',String(si).padStart(2,'0')),
       el('h2',null,esc(sec.label)),
       el('span','section-count',qs.filter(isInput).length+(qs.filter(isInput).length===1?' question':' questions'))
     );
