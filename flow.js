@@ -27,29 +27,24 @@
    ------------------------------------------------------------------ */
 
 window.JA_FLOW = {
-  version: "0.5-demo",
+  version: "0.6",
   title: "Tell us what you are looking for",
   intro:
     "The questions adapt as you go, so you should only see what applies to your enquiry. If a question is hard to answer, ask about it and we will answer it here.",
 
   sections: [
-    { id: "who", label: "Who is enquiring" },
-    { id: "b_who", label: "Your organisation" },
-    { id: "b_ask", label: "What you need" },
-    { id: "b_brief", label: "Your brief" },
-    { id: "b_group", label: "The group" },
-    { id: "b_when", label: "Dates and departures" },
-    { id: "b_purpose", label: "Purpose" },
-    { id: "b_scope", label: "Scope of work" },
-    { id: "b_comm", label: "Commercial structure" },
-    { id: "b_process", label: "Decision and timeline" },
-    { id: "b_close", label: "Trade enquiry — anything else" },
-    { id: "shape", label: "Trip shape" },
-    { id: "day", label: "Your day" },
-    { id: "dates", label: "Dates and flights" },
-    { id: "ground", label: "On the ground" },
-    { id: "stay", label: "Staying overnight" },
-    { id: "close", label: "Anything else" }
+    { id: "who",     label: "Who is enquiring" },
+    { id: "b_who",   label: "Your company" },
+    { id: "b_ask",   label: "What you need" },
+    { id: "b_trip",  label: "The trip" },
+    { id: "b_stay",  label: "Accommodation" },
+    { id: "b_close", label: "Anything else" },
+    { id: "shape",   label: "Trip shape" },
+    { id: "day",     label: "Your day" },
+    { id: "dates",   label: "Dates and flights" },
+    { id: "ground",  label: "On the ground" },
+    { id: "stay",    label: "Staying overnight" },
+    { id: "close",   label: "Anything else" }
   ],
 
   questions: [
@@ -343,12 +338,21 @@ window.JA_FLOW = {
         { value: "sanin", label: "San'in coast" },
         { value: "kyushu", label: "Kyushu" },
         { value: "cities", label: "Tokyo, Kyoto or Osaka as well" },
-        { value: "open", label: "Open to suggestions" }
+        { value: "open", label: "Open to suggestions" },
+        { value: "other", label: "Somewhere else" }
       ],
       showIf: { all: [{ q: "trip_type", eq: "multi_day" }] },
       required: true,
       assist: true,
       assistLabel: "Is this too much for the time I have?"
+    },
+    {
+      id: "md_regions_other",
+      section: "ground",
+      label: "Where else would you like to go?",
+      type: "text",
+      showIf: { all: [{ q: "md_regions", has: "other" }] },
+      required: true
     },
     {
       id: "md_themes",
@@ -363,9 +367,18 @@ window.JA_FLOW = {
         { value: "fishing", label: "Fishing" },
         { value: "makers", label: "Local makers and workshops" },
         { value: "temple_route", label: "Temple routes and old highways" },
-        { value: "quiet", label: "Comfort and low pace" }
+        { value: "quiet", label: "Comfort and low pace" },
+        { value: "other", label: "Something else" }
       ],
       showIf: { all: [{ q: "trip_type", eq: "multi_day" }] },
+      required: true
+    },
+    {
+      id: "md_themes_other",
+      section: "ground",
+      label: "Tell us what else the itinerary should cover",
+      type: "text",
+      showIf: { all: [{ q: "md_themes", has: "other" }] },
       required: true
     },
     {
@@ -474,6 +487,15 @@ window.JA_FLOW = {
       required: true
     },
     {
+      id: "contact_phone",
+      section: "close",
+      label: "Phone number",
+      hint: "Only used if something needs a quick answer.",
+      type: "text",
+      showIf: { all: [{ q: "trip_type", in: ["single_day", "multi_day"] }] },
+      required: true
+    },
+    {
       id: "source",
       section: "close",
       label: "How did you come across us?",
@@ -502,780 +524,338 @@ window.JA_FLOW = {
     /* ================================================================
        B2B branch — trade, group and institutional enquiries.
 
-       Branches on three axes, not on trip type:
-         b_org_type   who they are      (reseller / brand / institution)
-         b_maturity   how firm the brief is
-         b_need       what they want back
+       Rebuilt against Nagi's feedback (Aug 2026) and JA's live B2B
+       Google Form. The live form's 25 questions are the baseline; this
+       adds two routing questions and makes four fields conditional.
 
-       Purpose is a single question gating four sub-blocks, so adding a
-       fourth purpose later is a block rather than a form.
-
-       Written against three live discussions: ABSA (sports exchange),
-       Kammui (fixed itinerary to cost), Shailer Park (school study tour).
+       26 defined, 20-26 shown. The sport and school branches are a
+       single option in Group category, not sections — the detail is a
+       staff follow-up checklist, not a form field.
        ================================================================ */
 
-    /* ---------- who they are ---------- */
+    /* ---------- S1 · your company ---------- */
     {
       id: "b_org_name",
       section: "b_who",
-      label: "Organisation name",
+      label: "Company name",
       type: "text",
       showIf: { all: [{ q: "party_type", in: ["b2b_agent", "b2b_group"] }] },
       required: true
     },
     {
-      id: "b_org_type",
+      id: "b_contact_name",
       section: "b_who",
-      label: "Which of these describes you best?",
-      hint: "This decides most of what follows. A reseller and an institution travelling itself need different things from us.",
-      type: "choice",
-      options: [
-        { value: "operator_reseller", label: "Tour operator or agency selling to your own customers" },
-        { value: "brand_curator", label: "Travel brand building an itinerary you will sell under your own name" },
-        { value: "school", label: "School, university or educational institution" },
-        { value: "club_corporate", label: "Club, team, association or company travelling ourselves" },
-        { value: "dmc_inbound", label: "DMC or inbound agent placing a client's group" },
-        { value: "other", label: "Something else" }
-      ],
+      label: "Contact person",
+      type: "text",
+      showIf: { all: [{ q: "party_type", in: ["b2b_agent", "b2b_group"] }] },
+      required: true
+    },
+    {
+      id: "b_contact_email",
+      section: "b_who",
+      label: "Email",
+      type: "text",
+      placeholder: "you@company.com",
+      showIf: { all: [{ q: "party_type", in: ["b2b_agent", "b2b_group"] }] },
+      required: true
+    },
+    {
+      id: "b_phone",
+      section: "b_who",
+      label: "Phone number",
+      type: "text",
       showIf: { all: [{ q: "party_type", in: ["b2b_agent", "b2b_group"] }] },
       required: true
     },
     {
       id: "b_country",
       section: "b_who",
-      label: "Which market are you selling from?",
+      label: "Country or region you sell from",
       type: "text",
       placeholder: "Australia",
-      showIf: { all: [{ q: "b_org_type", answered: true }] },
+      showIf: { all: [{ q: "party_type", in: ["b2b_agent", "b2b_group"] }] },
       required: true
     },
     {
-      id: "b_relationship",
+      id: "b_website",
       section: "b_who",
-      label: "Have we worked together before?",
-      type: "choice",
-      options: [
-        { value: "first", label: "This is first contact" },
-        { value: "in_touch", label: "We have been in touch" },
-        { value: "existing", label: "We are an existing partner" }
-      ],
-      showIf: { all: [{ q: "b_org_type", answered: true }] },
+      label: "Official website",
+      type: "text",
+      placeholder: "https://",
+      showIf: { all: [{ q: "party_type", in: ["b2b_agent", "b2b_group"] }] },
       required: true
     },
+    {
+      id: "b_japan_page",
+      section: "b_who",
+      label: "Page for your Japan products, if you have one",
+      type: "text",
+      placeholder: "https://",
+      showIf: { all: [{ q: "party_type", in: ["b2b_agent", "b2b_group"] }] }
+    },
 
-    /* ---------- what they want back ---------- */
+    /* ---------- S2 · what you need. The routing. ---------- */
     {
       id: "b_need",
       section: "b_ask",
       label: "What do you need from us?",
-      hint: "Select everything that applies. A costed estimate and a full proposal are different pieces of work.",
       type: "multi",
       options: [
         { value: "estimate", label: "Costs against an itinerary we already have" },
         { value: "full_proposal", label: "A full proposal: itinerary, costs, logistics" },
         { value: "local_partner", label: "A local partner for a project we are developing" },
         { value: "site_inspection", label: "A site inspection or familiarisation visit" },
-        { value: "availability", label: "Availability and feasibility only" },
-        { value: "talk_first", label: "Not sure yet — we would rather talk" }
+        { value: "availability", label: "Availability and feasibility only" }
       ],
-      showIf: { all: [{ q: "b_org_type", answered: true }] },
+      showIf: { all: [{ q: "b_org_name", answered: true }] },
       required: true
     },
-
-    /* ---------- how firm the brief is ---------- */
     {
       id: "b_maturity",
-      section: "b_brief",
+      section: "b_ask",
       label: "How settled is the trip?",
       type: "choice",
       options: [
         { value: "fixed_itinerary", label: "We have an itinerary and need it costed" },
         { value: "prior_itinerary", label: "We have run something similar and want it improved" },
-        { value: "concept_dates", label: "We have an objective and a date, but no route" },
-        { value: "exploratory", label: "Early stage — no dates yet" }
+        { value: "concept_dates", label: "We have an objective and dates, but no route" },
+        { value: "exploratory", label: "Early stage — nothing fixed yet" }
       ],
       showIf: { all: [{ q: "b_need", answered: true }] },
       required: true
     },
     {
       id: "b_brief_paste",
-      section: "b_brief",
-      label: "Paste your itinerary, brief or request for proposal here",
-      hint: "Anything you have already written. We will read it and fill in what we can, so you are correcting rather than retyping.",
+      section: "b_ask",
+      label: "Your itinerary or brief",
+      hint: "Paste it here, or give us a link to a file. Anything you have already written is better than retyping it.",
       type: "longtext",
       showIf: { all: [{ q: "b_maturity", in: ["fixed_itinerary", "prior_itinerary"] }] },
-      required: true
-    },
-    {
-      id: "b_fixed_elements",
-      section: "b_brief",
-      label: "Which parts are fixed, and which can we change?",
-      hint: "Worth being honest here. Some things we may need to change for reasons on the ground rather than preference.",
-      type: "multi",
-      options: [
-        { value: "dates", label: "Dates" },
-        { value: "route", label: "Route and regions" },
-        { value: "accommodation", label: "Accommodation standard" },
-        { value: "experiences", label: "Specific experiences named in the brief" },
-        { value: "price_point", label: "Price point" },
-        { value: "nothing", label: "Nothing is fixed yet" }
-      ],
-      showIf: { all: [{ q: "b_maturity", in: ["fixed_itinerary", "prior_itinerary"] }] },
-      required: true,
-      assist: true,
-      assistLabel: "What usually has to change, and why?"
-    },
-    {
-      id: "b_change_wanted",
-      section: "b_brief",
-      label: "What would you change from last time?",
-      hint: "Including anything that did not work. That is often more useful than what did.",
-      type: "longtext",
-      showIf: { all: [{ q: "b_maturity", eq: "prior_itinerary" }] },
-      required: true
-    },
-    {
-      id: "b_objectives",
-      section: "b_brief",
-      label: "What does this trip have to achieve?",
-      hint: "The objective rather than the itinerary. We will propose the route.",
-      type: "longtext",
-      showIf: { all: [{ q: "b_maturity", in: ["concept_dates", "exploratory"] }] },
       required: true
     },
 
-    /* ---------- the group ---------- */
+    /* ---------- S3 · the trip ---------- */
     {
-      id: "b_size_known",
-      section: "b_group",
-      label: "Do you know the group size?",
+      id: "b_date_from",
+      section: "b_trip",
+      label: "Start date",
+      hint: "If dates are not final, give us your best estimate and say so at the end.",
+      type: "date",
+      showIf: { all: [{ q: "b_maturity", answered: true }] },
+      required: true
+    },
+    {
+      id: "b_date_to",
+      section: "b_trip",
+      label: "End date",
+      type: "date",
+      showIf: { all: [{ q: "b_maturity", answered: true }] },
+      required: true
+    },
+    {
+      id: "b_group_composition",
+      section: "b_trip",
+      label: "Group composition",
+      hint: "Numbers and ages where relevant.",
+      type: "text",
+      placeholder: "6 adults",
+      showIf: { all: [{ q: "b_maturity", answered: true }] },
+      required: true
+    },
+    {
+      id: "b_nationality",
+      section: "b_trip",
+      label: "Nationality of the group",
+      type: "text",
+      showIf: { all: [{ q: "b_maturity", answered: true }] },
+      required: true
+    },
+    {
+      id: "b_group_category",
+      section: "b_trip",
+      label: "What kind of group is it?",
       type: "choice",
       options: [
-        { value: "exact", label: "Yes, an exact number" },
-        { value: "band", label: "A range rather than a number" },
-        { value: "unknown", label: "Not yet" }
+        { value: "family", label: "Family" },
+        { value: "couple", label: "Couple" },
+        { value: "friends", label: "Friends" },
+        { value: "colleagues", label: "Colleagues" },
+        { value: "hobby", label: "Hobby or activity group" },
+        { value: "sports", label: "Sports team" },
+        { value: "school", label: "School or student group" },
+        { value: "other", label: "Other" }
       ],
       showIf: { all: [{ q: "b_maturity", answered: true }] },
       required: true
     },
     {
-      id: "b_size_exact",
-      section: "b_group",
-      label: "How many people in total?",
-      hint: "Including staff and accompanying adults.",
-      type: "counter",
-      min: 1,
-      max: 200,
-      showIf: { all: [{ q: "b_size_known", eq: "exact" }] },
-      required: true
-    },
-    {
-      id: "b_size_band",
-      section: "b_group",
-      label: "Roughly what size?",
-      hint: "Pricing changes across these bands, so a range is genuinely useful even without a final number.",
-      type: "choice",
-      options: [
-        { value: "u10", label: "Under 10" },
-        { value: "10_20", label: "10 to 20" },
-        { value: "20_30", label: "20 to 30" },
-        { value: "30_50", label: "30 to 50" },
-        { value: "50p", label: "More than 50" }
-      ],
-      showIf: { all: [{ q: "b_size_known", eq: "band" }] },
-      required: true
-    },
-    {
-      id: "b_composition",
-      section: "b_group",
-      label: "Who is travelling?",
-      type: "multi",
-      options: [
-        { value: "adults", label: "Adults only" },
-        { value: "families", label: "Families with children" },
-        { value: "under18", label: "Participants under 18" },
-        { value: "students", label: "Students" },
-        { value: "staff", label: "Accompanying staff or teachers" },
-        { value: "supporters", label: "Spectators or supporters" }
-      ],
-      showIf: { all: [{ q: "b_size_known", answered: true }] },
-      required: true
-    },
-    {
-      id: "b_origin",
-      section: "b_group",
-      label: "Where does the group depart from?",
-      hint: "The nearest major airport is enough. Routing into Japan often decides where an itinerary can start and end.",
+      id: "b_group_category_other",
+      section: "b_trip",
+      label: "Tell us what kind of group",
       type: "text",
-      placeholder: "Brisbane",
-      showIf: { all: [{ q: "b_composition", answered: true }] },
+      showIf: { all: [{ q: "b_group_category", eq: "other" }] },
+      required: true
+    },
+    {
+      id: "b_arrival_airport",
+      section: "b_trip",
+      label: "Arrival airport",
+      type: "text",
+      placeholder: "Kansai",
+      showIf: { all: [{ q: "b_maturity", answered: true }] },
       required: true,
       assist: true,
-      assistLabel: "Which Japanese airport should we route into?"
+      assistLabel: "Which airport should we route into?"
     },
     {
-      id: "b_japan_experience",
-      section: "b_group",
-      label: "How much travelling has the group done?",
-      hint: "This changes the briefing material rather than the itinerary. Groups travelling internationally for the first time need to know what to expect before they commit.",
-      type: "choice",
-      options: [
-        { value: "new_japan", label: "Most have not been to Japan" },
-        { value: "new_abroad", label: "Most have not travelled internationally" },
-        { value: "experienced", label: "Experienced travellers" },
-        { value: "mixed", label: "Mixed" }
-      ],
-      showIf: { all: [{ q: "b_composition", answered: true }] }
-    },
-
-    /* ---------- duty of care: only when minors are travelling ---------- */
-    {
-      id: "b_supervision_ratio",
-      section: "b_group",
-      label: "What supervision ratio do you have to meet?",
-      hint: "Asked because the group includes participants under 18.",
+      id: "b_departure_airport",
+      section: "b_trip",
+      label: "Departure airport",
       type: "text",
-      placeholder: "1 adult to 8 students",
-      showIf: { all: [{ q: "b_composition", hasAny: ["under18", "students"] }] },
+      placeholder: "Matsuyama",
+      showIf: { all: [{ q: "b_maturity", answered: true }] },
       required: true
     },
     {
-      id: "b_safeguarding",
-      section: "b_group",
-      label: "What do you need us to provide on duty of care?",
+      id: "b_services",
+      section: "b_trip",
+      label: "Which services do you want from us?",
       type: "multi",
       options: [
-        { value: "checked_staff", label: "Background-checked staff" },
-        { value: "risk_assessment", label: "Written risk assessment" },
-        { value: "emergency_contact", label: "24 hour emergency contact in Japan" },
-        { value: "medical", label: "Medical cover arrangements" },
-        { value: "consent", label: "Parental consent handling" }
-      ],
-      showIf: { all: [{ q: "b_composition", hasAny: ["under18", "students"] }] },
-      required: true
-    },
-    {
-      id: "b_insurance_constraint",
-      section: "b_group",
-      label: "How is travel insurance handled?",
-      hint: "Some institutions are required to use a named provider. If so we will leave it out rather than quote something you cannot buy.",
-      type: "choice",
-      options: [
-        { value: "mandated", label: "We must use a provider we are given" },
-        { value: "arrange", label: "We need you to arrange it" },
-        { value: "undecided", label: "Not decided" }
-      ],
-      showIf: { all: [{ q: "b_composition", hasAny: ["under18", "students"] }] },
-      required: true
-    },
-
-    /* ---------- dates and departures ---------- */
-    {
-      id: "b_dates_firmness",
-      section: "b_when",
-      label: "How fixed are the dates?",
-      type: "choice",
-      options: [
-        { value: "fixed", label: "Fixed" },
-        { value: "window", label: "A window we work within" },
-        { value: "flexible", label: "Flexible" },
-        { value: "not_set", label: "Not set yet" }
-      ],
-      showIf: { all: [{ q: "b_composition", answered: true }] },
-      required: true
-    },
-    {
-      id: "b_date_from",
-      section: "b_when",
-      label: "Earliest date",
-      type: "date",
-      showIf: { all: [{ q: "b_dates_firmness", in: ["fixed", "window"] }] },
-      required: true
-    },
-    {
-      id: "b_date_to",
-      section: "b_when",
-      label: "Latest date",
-      type: "date",
-      showIf: { all: [{ q: "b_dates_firmness", in: ["fixed", "window"] }] },
-      required: true
-    },
-    {
-      id: "b_nights",
-      section: "b_when",
-      label: "How many nights in Japan?",
-      type: "counter",
-      min: 1,
-      max: 30,
-      showIf: { all: [{ q: "b_dates_firmness", in: ["fixed", "window", "flexible"] }] },
-      required: true
-    },
-    {
-      id: "b_frequency",
-      section: "b_when",
-      label: "Is this a one-off or the start of something recurring?",
-      hint: "A single departure and a programme are quoted differently, so it is worth saying now.",
-      type: "choice",
-      options: [
-        { value: "one_off", label: "One-off" },
-        { value: "annual", label: "Annual or recurring" },
-        { value: "multiple", label: "Several departures a year" },
-        { value: "pilot", label: "A pilot first, then scale" }
-      ],
-      showIf: { all: [{ q: "b_dates_firmness", answered: true }] },
-      required: true
-    },
-
-    /* ---------- purpose: one question, four sub-blocks ---------- */
-    {
-      id: "b_purpose",
-      section: "b_purpose",
-      label: "What is the trip built around?",
-      type: "multi",
-      options: [
-        { value: "sport", label: "Sport or competition" },
-        { value: "education", label: "Education or study" },
-        { value: "culture", label: "Food and culture" },
-        { value: "outdoor", label: "Outdoor and active" },
-        { value: "corporate", label: "Corporate or incentive" },
-        { value: "special", label: "Faith or special interest" },
+        { value: "itinerary", label: "Day-by-day itinerary" },
+        { value: "accommodation", label: "Accommodation" },
+        { value: "guide", label: "Interpreter guide" },
+        { value: "car", label: "Private car with driver" },
+        { value: "transport", label: "Public transport" },
+        { value: "activities", label: "Activities and experiences" },
+        { value: "dining", label: "Dining" },
         { value: "other", label: "Something else" }
       ],
-      showIf: { all: [{ q: "b_frequency", answered: true }] },
+      showIf: { all: [{ q: "b_maturity", answered: true }] },
       required: true
     },
-
-    /* sport */
-    {
-      id: "b_sport",
-      section: "b_purpose",
-      label: "Which sport?",
-      type: "text",
-      placeholder: "Women's softball",
-      showIf: { all: [{ q: "b_purpose", has: "sport" }] },
-      required: true
-    },
-    {
-      id: "b_games_count",
-      section: "b_purpose",
-      label: "How many games or fixtures?",
-      type: "counter",
-      min: 0,
-      max: 20,
-      showIf: { all: [{ q: "b_purpose", has: "sport" }] },
-      required: true
-    },
-    {
-      id: "b_level",
-      section: "b_purpose",
-      label: "What level does the group play at?",
-      type: "choice",
-      options: [
-        { value: "school", label: "School" },
-        { value: "club", label: "Club amateur" },
-        { value: "semi_pro", label: "Semi-professional" },
-        { value: "mixed", label: "Mixed ability" }
-      ],
-      showIf: { all: [{ q: "b_purpose", has: "sport" }] },
-      required: true
-    },
-    {
-      id: "b_age_gender",
-      section: "b_purpose",
-      label: "Age group and category",
-      type: "text",
-      placeholder: "Girls under 16",
-      showIf: { all: [{ q: "b_purpose", has: "sport" }] },
-      required: true
-    },
-    {
-      id: "b_opponent_pref",
-      section: "b_purpose",
-      label: "What standard of opposition suits you?",
-      type: "choice",
-      options: [
-        { value: "similar", label: "Similar standard" },
-        { value: "stronger", label: "Stronger — the challenge is the point" },
-        { value: "mixed", label: "A mix" },
-        { value: "any", label: "Not important" }
-      ],
-      showIf: { all: [{ q: "b_purpose", has: "sport" }] },
-      required: true
-    },
-    {
-      id: "b_rest_days",
-      section: "b_purpose",
-      label: "Can the group play on consecutive days?",
-      hint: "This decides how far apart the host regions can be, so it shapes the route as much as the schedule.",
-      type: "choice",
-      options: [
-        { value: "consecutive_ok", label: "Consecutive days are fine" },
-        { value: "rest_day", label: "At least one rest day between games" },
-        { value: "spread", label: "Prefer them spread out" }
-      ],
-      showIf: { all: [{ q: "b_purpose", has: "sport" }] },
-      required: true
-    },
-    {
-      id: "b_venue_needs",
-      section: "b_purpose",
-      label: "Anything the venues have to provide?",
-      type: "longtext",
-      showIf: { all: [{ q: "b_purpose", has: "sport" }] }
-    },
-    {
-      id: "b_kit_logistics",
-      section: "b_purpose",
-      label: "What do you need handled around kit and welfare?",
-      hint: "Uniform laundering between fixtures is the one most groups forget until they are here.",
-      type: "multi",
-      options: [
-        { value: "laundry", label: "Uniform laundering" },
-        { value: "equipment", label: "Equipment transport" },
-        { value: "medical", label: "Medical or physiotherapy cover" },
-        { value: "none", label: "Nothing special" }
-      ],
-      showIf: { all: [{ q: "b_purpose", has: "sport" }] },
-      required: true
-    },
-    {
-      id: "b_supporters",
-      section: "b_purpose",
-      label: "Is anyone travelling who is not competing?",
-      type: "choice",
-      options: [
-        { value: "players_only", label: "Players and staff only" },
-        { value: "families", label: "Families travelling alongside" },
-        { value: "separate_programme", label: "Families travelling, and they need their own programme" }
-      ],
-      showIf: { all: [{ q: "b_purpose", has: "sport" }] },
-      required: true
-    },
-
-    /* education */
-    {
-      id: "b_year_levels",
-      section: "b_purpose",
-      label: "Which year levels?",
-      type: "text",
-      placeholder: "Years 5 and 6",
-      showIf: { all: [{ q: "b_purpose", has: "education" }] },
-      required: true
-    },
-    {
-      id: "b_curriculum_link",
-      section: "b_purpose",
-      label: "What does the tour need to connect to?",
-      type: "multi",
-      options: [
-        { value: "language", label: "Language study" },
-        { value: "history", label: "History" },
-        { value: "stem", label: "Science and technology" },
-        { value: "arts", label: "Arts and design" },
-        { value: "general", label: "General cultural exposure" }
-      ],
-      showIf: { all: [{ q: "b_purpose", has: "education" }] },
-      required: true
-    },
-    {
-      id: "b_school_exchange",
-      section: "b_purpose",
-      label: "Do you want contact with Japanese students?",
-      type: "choice",
-      options: [
-        { value: "visit", label: "A school visit" },
-        { value: "exchange", label: "An exchange with local students" },
-        { value: "homestay", label: "Homestay" },
-        { value: "none", label: "Not required" }
-      ],
-      showIf: { all: [{ q: "b_purpose", has: "education" }] },
-      required: true
-    },
-    {
-      id: "b_reporting",
-      section: "b_purpose",
-      label: "What do you need from us outside the tour itself?",
-      type: "multi",
-      options: [
-        { value: "briefing", label: "Pre-departure briefing material" },
-        { value: "risk_docs", label: "Risk documentation" },
-        { value: "post_report", label: "Post-tour report" },
-        { value: "parent_evening", label: "Material for a parent information evening" }
-      ],
-      showIf: { all: [{ q: "b_purpose", has: "education" }] },
-      required: true
-    },
-
-    /* experiential */
     {
       id: "b_themes",
-      section: "b_purpose",
-      label: "What should the itinerary be built around?",
+      section: "b_trip",
+      label: "What should the trip be built around?",
       type: "multi",
       options: [
-        { value: "food", label: "Food and drink" },
-        { value: "craft", label: "Craft and makers" },
-        { value: "landscape", label: "Landscape and walking" },
+        { value: "sake_food", label: "Sake and food" },
+        { value: "history", label: "History, culture and art" },
+        { value: "scenic", label: "Scenery and nature" },
+        { value: "trekking", label: "Trekking" },
         { value: "cycling", label: "Cycling" },
-        { value: "islands", label: "Islands and the Inland Sea" },
-        { value: "rural", label: "Rural stays" },
-        { value: "art", label: "Art" }
+        { value: "fishing", label: "Fishing" },
+        { value: "local", label: "Local experiences" },
+        { value: "private", label: "Private and exclusive use" },
+        { value: "other", label: "Something else" }
       ],
-      showIf: { all: [{ q: "b_purpose", hasAny: ["culture", "outdoor"] }] },
+      showIf: { all: [{ q: "b_maturity", answered: true }] },
       required: true
     },
     {
-      id: "b_pace",
-      section: "b_purpose",
-      label: "What pace suits the group?",
-      type: "choice",
-      options: [
-        { value: "full", label: "Full — cover as much as the days allow" },
-        { value: "balanced", label: "Balanced" },
-        { value: "unhurried", label: "Unhurried — fewer places, longer in each" }
-      ],
-      showIf: { all: [{ q: "b_purpose", hasAny: ["culture", "outdoor"] }] },
+      id: "b_themes_other",
+      section: "b_trip",
+      label: "Tell us what else the trip should cover",
+      type: "text",
+      showIf: { all: [{ q: "b_themes", has: "other" }] },
       required: true
     },
     {
-      id: "b_exclusivity",
-      section: "b_purpose",
-      label: "How private does it need to be?",
+      id: "b_guide_language",
+      section: "b_trip",
+      label: "Which language should the guide work in?",
+      hint: "English is standard. We will do our best with anything else.",
       type: "choice",
       options: [
-        { value: "private", label: "Private throughout" },
-        { value: "mostly", label: "Mostly private" },
-        { value: "shared", label: "Shared arrangements are acceptable" }
+        { value: "english", label: "English" },
+        { value: "other", label: "Another language" }
       ],
-      showIf: { all: [{ q: "b_purpose", hasAny: ["culture", "outdoor"] }] },
+      showIf: { all: [{ q: "b_services", has: "guide" }] },
       required: true
     },
     {
-      id: "b_comfort",
-      section: "b_purpose",
-      label: "What accommodation standard are you working to?",
+      id: "b_guide_language_other",
+      section: "b_trip",
+      label: "Which language?",
+      type: "text",
+      showIf: { all: [{ q: "b_guide_language", eq: "other" }] },
+      required: true
+    },
+
+    /* ---------- S4 · accommodation. Only if they want it. ---------- */
+    {
+      id: "b_rooms",
+      section: "b_stay",
+      label: "How many rooms, and of what kind?",
+      type: "rooms",
+      showIf: { all: [{ q: "b_services", has: "accommodation" }] },
+      required: true
+    },
+    {
+      id: "b_room_type",
+      section: "b_stay",
+      label: "Preferred room style",
       type: "choice",
       options: [
-        { value: "3", label: "3 star" },
-        { value: "34", label: "3 to 4 star" },
-        { value: "45", label: "4 to 5 star" },
-        { value: "character", label: "Ryokan and character stays" },
-        { value: "mixed", label: "Mixed, depending on the location" }
+        { value: "western", label: "Western-style" },
+        { value: "japanese_ok", label: "Japanese-style room acceptable" },
+        { value: "japanese_pref", label: "Japanese-style preferred" }
       ],
-      showIf: { all: [{ q: "b_purpose", hasAny: ["culture", "outdoor"] }] },
+      showIf: { all: [{ q: "b_services", has: "accommodation" }] },
+      required: true
+    },
+    {
+      id: "b_hotel_category",
+      section: "b_stay",
+      label: "Accommodation standard",
+      type: "choice",
+      options: [
+        { value: "luxury", label: "Luxury — 5 star or high-end ryokan" },
+        { value: "upper_mid", label: "Upper-mid — 4 star" },
+        { value: "standard", label: "Standard — 3 star" },
+        { value: "none", label: "No preference" }
+      ],
+      showIf: { all: [{ q: "b_services", has: "accommodation" }] },
       required: true,
       assist: true,
       assistLabel: "What is actually available in rural Shikoku?"
     },
-
-    /* corporate */
     {
-      id: "b_event_component",
-      section: "b_purpose",
-      label: "Is there an event element?",
-      type: "multi",
-      options: [
-        { value: "meeting", label: "Meeting space" },
-        { value: "dinner", label: "Awards or gala dinner" },
-        { value: "team", label: "Team activity" },
-        { value: "conference", label: "Conference" },
-        { value: "none", label: "None" }
-      ],
-      showIf: { all: [{ q: "b_purpose", has: "corporate" }] },
-      required: true
-    },
-
-    /* ---------- scope of work: the commercial hinge ---------- */
-    {
-      id: "b_scope",
-      section: "b_scope",
-      label: "What would you like us to handle?",
-      hint: "Select everything that applies. Some of these sit outside a normal land operation and are priced differently.",
-      type: "multi",
-      options: [
-        { value: "land", label: "Land operation — itinerary, hotels, transport, guides, meals" },
-        { value: "flights", label: "Flights" },
-        { value: "partner_sourcing", label: "Sourcing and negotiating with local partners" },
-        { value: "local_rep", label: "Acting as your representative in Japan" },
-        { value: "event_planning", label: "Event planning and coordination" },
-        { value: "marketing", label: "Photography and marketing material" },
-        { value: "inspection", label: "Hosting a site inspection" },
-        { value: "staffing", label: "Recruiting staff for the event" },
-        { value: "group_leader", label: "A group leader travelling throughout" },
-        { value: "risk", label: "Risk management and emergency support" }
-      ],
-      showIf: { all: [{ q: "b_purpose", answered: true }] },
-      required: true
-    },
-    {
-      id: "b_prep_phase",
-      section: "b_scope",
-      label: "Is there a preparation period before the tour that needs work from us?",
-      hint: "Coordination, venue research and representation ahead of a departure sit outside a tour price. Saying so now avoids a quote that has to be unpicked later.",
-      type: "choice",
-      options: [
-        { value: "substantial", label: "Yes, substantial — ongoing work over months or years" },
-        { value: "light", label: "Yes, but light" },
-        { value: "none", label: "No — the tour itself is the work" }
-      ],
-      showIf: { all: [{ q: "b_scope", answered: true }] },
-      required: true,
-      assist: true,
-      assistLabel: "What counts as preparation work?"
-    },
-    {
-      id: "b_prep_duration",
-      section: "b_scope",
-      label: "Over what period?",
-      type: "choice",
-      options: [
-        { value: "u6m", label: "Under 6 months" },
-        { value: "6_12m", label: "6 to 12 months" },
-        { value: "1_2y", label: "1 to 2 years" },
-        { value: "2yp", label: "More than 2 years" }
-      ],
-      showIf: { all: [{ q: "b_prep_phase", in: ["substantial", "light"] }] },
-      required: true
-    },
-
-    /* ---------- commercial structure ---------- */
-    {
-      id: "b_pricing_basis",
-      section: "b_comm",
-      label: "How do you need this priced?",
-      type: "choice",
-      options: [
-        { value: "per_person", label: "Per person" },
-        { value: "per_group", label: "Per group" },
-        { value: "size_band", label: "A package price by group size band" },
-        { value: "net_margin", label: "Net rates, and we add our own margin" },
-        { value: "commission", label: "Commission" },
-        { value: "unsure", label: "Not sure yet" }
-      ],
-      showIf: { all: [{ q: "b_prep_phase", answered: true }] },
-      required: true
-    },
-    {
-      id: "b_brand",
-      section: "b_comm",
-      label: "Whose name is on the tour?",
-      type: "choice",
-      options: [
-        { value: "yours", label: "Ours — you operate behind the scenes" },
-        { value: "ours", label: "Yours" },
-        { value: "co", label: "Both" },
-        { value: "undecided", label: "Not decided" }
-      ],
-      showIf: { all: [{ q: "b_prep_phase", answered: true }] },
-      required: true
-    },
-    {
-      id: "b_prep_budget",
-      section: "b_comm",
-      label: "How is preparation and representation work usually budgeted on your side?",
-      hint: "Asked because you told us there is a preparation period. It sits outside a tour price, and how it is funded is easier to agree now than after a quote.",
-      type: "choice",
-      options: [
-        { value: "separate", label: "We allocate a separate budget for it" },
-        { value: "inside_tour", label: "We expect it inside the tour price" },
-        { value: "not_discussed", label: "It has not been discussed" }
-      ],
-      showIf: { all: [{ q: "b_prep_phase", in: ["substantial", "light"] }] },
-      required: true
-    },
-    {
-      id: "b_incumbent",
-      section: "b_comm",
-      label: "Do you work with a partner elsewhere whose arrangement we should match?",
-      hint: "If you already have a structure that works in another country, describing it saves us both a round of guessing.",
-      type: "longtext",
-      showIf: {
-        all: [{ q: "b_org_type", in: ["operator_reseller", "brand_curator", "dmc_inbound"] }]
-      }
-    },
-    {
-      id: "b_procurement",
-      section: "b_comm",
-      label: "Are there procurement rules we have to work within?",
-      type: "multi",
-      options: [
-        { value: "insurer", label: "A named insurance provider we must use" },
-        { value: "supplier_list", label: "An approved supplier list" },
-        { value: "tender", label: "A formal tender process" },
-        { value: "none", label: "No constraints" }
-      ],
-      showIf: { all: [{ q: "b_org_type", eq: "school" }] },
-      required: true
-    },
-
-    /* ---------- decision and timeline ---------- */
-    {
-      id: "b_proposal_deadline",
-      section: "b_process",
-      label: "When do you need our proposal by?",
-      type: "date",
-      showIf: { all: [{ q: "b_pricing_basis", answered: true }] },
-      required: true
-    },
-    {
-      id: "b_decision_by",
-      section: "b_process",
-      label: "When do you expect to decide?",
-      type: "month",
-      showIf: { all: [{ q: "b_pricing_basis", answered: true }] }
-    },
-    {
-      id: "b_next_step",
-      section: "b_process",
-      label: "What happens next if this looks like a fit?",
-      type: "choice",
-      options: [
-        { value: "proposal", label: "We read the proposal, then decide" },
-        { value: "call", label: "A call first" },
-        { value: "visit", label: "A site visit first" },
-        { value: "agreement", label: "Straight to a partnership agreement" }
-      ],
-      showIf: { all: [{ q: "b_pricing_basis", answered: true }] },
-      required: true
-    },
-
-    /* ---------- close ---------- */
-    {
-      id: "b_prior_experience",
-      section: "b_close",
-      label: "Have you run something like this before?",
-      hint: "Where, with whom, and what you would keep or avoid.",
-      type: "longtext",
-      showIf: {
-        all: [
-          { q: "b_maturity", in: ["fixed_itinerary", "concept_dates", "exploratory"] },
-          { q: "b_pricing_basis", answered: true }
-        ]
-      }
-    },
-    {
-      id: "b_contact_name",
-      section: "b_close",
-      label: "Your name",
+      id: "b_diet",
+      section: "b_stay",
+      label: "Dietary requirements or allergies",
+      hint: "Rural kitchens need this well in advance, and dashi makes strict vegetarian and no-fish requests harder than they look.",
       type: "text",
-      showIf: { all: [{ q: "b_pricing_basis", answered: true }] },
+      placeholder: "None",
+      showIf: { all: [{ q: "b_services", hasAny: ["accommodation", "dining"] }] },
       required: true
     },
+
+    /* ---------- S5 · anything else ---------- */
     {
-      id: "b_contact_email",
+      id: "b_other",
       section: "b_close",
-      label: "Email",
-      type: "text",
-      placeholder: "you@example.com",
-      showIf: { all: [{ q: "b_pricing_basis", answered: true }] },
-      required: true
-    },
-    {
-      id: "b_notes",
-      section: "b_close",
-      label: "Anything else we should know?",
+      label: "Anything you want included in, or left out of, the quotation?",
       type: "longtext",
-      showIf: { all: [{ q: "b_pricing_basis", answered: true }] }
+      showIf: { all: [{ q: "b_maturity", answered: true }] }
+    },
+    {
+      id: "b_source",
+      section: "b_close",
+      label: "How did you come across us?",
+      type: "choice",
+      options: [
+        { value: "search", label: "Search engine" },
+        { value: "ai", label: "An AI assistant recommended you" },
+        { value: "trade", label: "A trade event or association" },
+        { value: "referral", label: "Recommended by someone" },
+        { value: "social", label: "Social media" },
+        { value: "repeat", label: "We have worked with you before" },
+        { value: "other", label: "Other" }
+      ],
+      showIf: { all: [{ q: "b_maturity", answered: true }] },
+      required: true
     }
   ]
 };

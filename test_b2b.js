@@ -1,6 +1,7 @@
-/* Coverage test for the B2B branch.
+/* Coverage test for the question model.
    Uses the REAL showIf evaluator lifted verbatim from index.html, so this
-   tests the shipped logic rather than a reimplementation of it. */
+   tests the shipped logic rather than a reimplementation of it.
+   Run: node test_b2b.js */
 
 global.window = {};
 require('./flow.js');
@@ -34,142 +35,122 @@ const isInput = q => q.type!=='notice';
 /* --- end verbatim --- */
 
 const shown = a => FLOW.questions.filter(q => isInput(q) && visible(q,a)).map(q=>q.id);
+/* mirrors liveSections() — the pagination spine */
+const steps = a => FLOW.sections
+  .filter(s => FLOW.questions.some(q => q.section===s.id && visible(q,a)))
+  .map(s=>s.label);
 
 const cases = {
 
-  /* ABSA — Casey Flanagan. US operator, sports exchange, event 2028,
-     two-year preparation phase, youth teams plus travelling families. */
-  ABSA: {
-    answers: {
-      party_type:"b2b_agent", b_org_name:"American Based Sports Abroad",
-      b_org_type:"operator_reseller", b_country:"United States", b_relationship:"in_touch",
-      b_need:["local_partner","site_inspection"],
-      b_maturity:"concept_dates", b_objectives:"Sports exchange tour, 2028",
-      b_size_known:"band", b_size_band:"30_50",
-      b_composition:["under18","families","staff","supporters"],
-      b_origin:"Dallas Fort Worth", b_japan_experience:"new_abroad",
-      b_supervision_ratio:"per team", b_safeguarding:["emergency_contact","medical"],
-      b_insurance_constraint:"undecided",
-      b_dates_firmness:"window", b_date_from:"2028-07-01", b_date_to:"2028-07-31",
-      b_nights:10, b_frequency:"pilot",
-      b_purpose:["sport","culture"],
-      b_sport:"Softball", b_games_count:5, b_level:"club", b_age_gender:"Youth, women",
-      b_opponent_pref:"similar", b_rest_days:"rest_day", b_kit_logistics:["laundry"],
-      b_supporters:"separate_programme",
-      b_themes:["food"], b_pace:"balanced", b_exclusivity:"mostly", b_comfort:"34",
-      b_scope:["land","partner_sourcing","local_rep","event_planning","inspection","staffing"],
-      b_prep_phase:"substantial", b_prep_duration:"2yp",
-      b_pricing_basis:"size_band", b_brand:"yours", b_prep_budget:"not_discussed",
-      b_next_step:"agreement", b_proposal_deadline:"2026-09-30",
-      b_contact_name:"Casey Flanagan", b_contact_email:"casey@theabsa.com"
-    },
-    mustSee: ["b_sport","b_rest_days","b_kit_logistics","b_supporters","b_prep_phase",
-              "b_prep_duration","b_prep_budget","b_incumbent","b_size_band",
-              "b_supervision_ratio","b_japan_experience","b_objectives"],
-    mustNotSee: ["b_brief_paste","b_change_wanted","b_year_levels","b_procurement",
-                 "b_size_exact","trip_type","md_regions","sd_theme"]
-  },
-
-  /* Kammui — Max Mackee. Brand curator, fully specified 2N/3D outline,
-     four adults, hard deadline, wants photos for a launch page. */
+  /* Kammui — brand curator, fixed 2N/3D outline to cost, four adults,
+     wants land operation including accommodation. */
   KAMMUI: {
     answers: {
-      party_type:"b2b_agent", b_org_name:"Kammui", b_org_type:"brand_curator",
-      b_country:"Japan", b_relationship:"in_touch",
-      b_need:["estimate"],
-      b_maturity:"fixed_itinerary",
-      b_brief_paste:"Stop 3 - Takamatsu, Seto Inland Sea & Iya Valley. 2 nights / 3 days...",
-      b_fixed_elements:["route","experiences"],
-      b_size_known:"exact", b_size_exact:4,
-      b_composition:["adults"], b_origin:"Takamatsu Airport", b_japan_experience:"experienced",
-      b_dates_firmness:"flexible", b_nights:2, b_frequency:"multiple",
-      b_purpose:["culture"],
-      b_themes:["islands","art","food"], b_pace:"unhurried",
-      b_exclusivity:"private", b_comfort:"character",
-      b_scope:["land","marketing"], b_prep_phase:"none",
-      b_pricing_basis:"net_margin", b_brand:"ours",
-      b_proposal_deadline:"2026-05-22", b_next_step:"proposal",
-      b_contact_name:"Max Mackee", b_contact_email:"max@kammui.com"
+      party_type:"b2b_agent", b_org_name:"Kammui", b_contact_name:"Max Mackee",
+      b_contact_email:"max@kammui.com", b_phone:"+81", b_country:"Japan",
+      b_website:"https://kammui.com",
+      b_need:["estimate"], b_maturity:"fixed_itinerary",
+      b_brief_paste:"Stop 3 — Takamatsu, Seto Inland Sea & Iya Valley, 2 nights / 3 days...",
+      b_date_from:"2026-10-01", b_date_to:"2026-10-03",
+      b_group_composition:"4 adults", b_nationality:"Mixed",
+      b_group_category:"friends",
+      b_arrival_airport:"Takamatsu", b_departure_airport:"Takamatsu",
+      b_services:["itinerary","accommodation","car","activities"],
+      b_themes:["scenic","local","private"],
+      b_rooms:{double:2}, b_room_type:"japanese_ok", b_hotel_category:"luxury",
+      b_diet:"None", b_source:"referral"
     },
-    mustSee: ["b_brief_paste","b_fixed_elements","b_themes","b_exclusivity","b_comfort",
-              "b_size_exact","b_incumbent","b_pricing_basis","b_brand","b_proposal_deadline",
-              "b_prior_experience"],
-    mustNotSee: ["b_supervision_ratio","b_safeguarding","b_insurance_constraint",
-                 "b_sport","b_rest_days","b_year_levels","b_procurement",
-                 "b_prep_duration","b_prep_budget","b_change_wanted","b_objectives",
-                 "b_size_band","trip_type"]
+    mustSee: ["b_brief_paste","b_rooms","b_room_type","b_hotel_category","b_diet","b_themes"],
+    mustNotSee: ["b_guide_language","b_group_category_other","b_themes_other","trip_type","md_regions"]
   },
 
-  /* Shailer Park State School — Thomas Harrison. Institution, prior 2025
-     itinerary to improve, minors, mandated insurer, formal RFP checklist. */
+  /* Shailer Park State School — prior itinerary to improve, students,
+     no accommodation selected so the whole stay section stays hidden. */
   SHAILER: {
     answers: {
       party_type:"b2b_group", b_org_name:"Shailer Park State School",
-      b_org_type:"school", b_country:"Australia", b_relationship:"first",
-      b_need:["full_proposal"],
-      b_maturity:"prior_itinerary",
-      b_brief_paste:"2025 itinerary: 4 nights Tokyo, 2 nights Kyoto, 1 night Hiroshima...",
-      b_fixed_elements:["dates"],
-      b_change_wanted:"More time in Kyoto and Hiroshima. Closer dinner venues.",
-      b_size_known:"band", b_size_band:"20_30",
-      b_composition:["students","staff"],
-      b_origin:"Brisbane", b_japan_experience:"new_japan",
-      b_supervision_ratio:"3 teachers, 2-4 parent chaperones",
-      b_safeguarding:["risk_assessment","emergency_contact","medical"],
-      b_insurance_constraint:"mandated",
-      b_dates_firmness:"fixed", b_date_from:"2027-09-23", b_date_to:"2027-10-01",
-      b_nights:8, b_frequency:"annual",
-      b_purpose:["education","culture"],
-      b_year_levels:"Years 5 and 6", b_curriculum_link:["language","history"],
-      b_school_exchange:"visit",
-      b_reporting:["briefing","risk_docs","parent_evening"],
-      b_themes:["landscape"], b_pace:"balanced", b_exclusivity:"mostly", b_comfort:"34",
-      b_scope:["land","flights","risk","group_leader"], b_prep_phase:"none",
-      b_pricing_basis:"per_person", b_brand:"yours",
-      b_procurement:["insurer"],
-      b_proposal_deadline:"2026-10-31", b_next_step:"proposal",
-      b_contact_name:"Tom Harrison", b_contact_email:"twhar0@eq.edu.au"
+      b_contact_name:"Tom Harrison", b_contact_email:"twhar0@eq.edu.au",
+      b_phone:"+61", b_country:"Australia", b_website:"https://shailerparkss.eq.edu.au",
+      b_need:["full_proposal"], b_maturity:"prior_itinerary",
+      b_brief_paste:"2025: 4 nights Tokyo, 2 Kyoto, 1 Hiroshima.",
+      b_date_from:"2027-09-23", b_date_to:"2027-10-01",
+      b_group_composition:"15 students, 3 teachers, 2-4 chaperones",
+      b_nationality:"Australian", b_group_category:"school",
+      b_arrival_airport:"Tokyo", b_departure_airport:"Tokyo",
+      b_services:["itinerary","guide","transport"],
+      b_themes:["history","local"], b_guide_language:"english",
+      b_source:"search"
     },
-    mustSee: ["b_brief_paste","b_change_wanted","b_year_levels","b_curriculum_link",
-              "b_school_exchange","b_reporting","b_supervision_ratio","b_safeguarding",
-              "b_insurance_constraint","b_procurement","b_size_band"],
-    mustNotSee: ["b_sport","b_rest_days","b_kit_logistics","b_prep_duration",
-                 "b_prep_budget","b_incumbent","b_objectives","b_size_exact",
-                 "b_event_component","trip_type"]
+    mustSee: ["b_brief_paste","b_group_category","b_guide_language","b_themes"],
+    mustNotSee: ["b_rooms","b_room_type","b_hotel_category","b_diet","b_group_category_other","trip_type"]
+  },
+
+  /* ABSA — concept and a date two years out, sports team, wants a partner
+     and a site visit. No itinerary to paste, no accommodation yet. */
+  ABSA: {
+    answers: {
+      party_type:"b2b_agent", b_org_name:"American Based Sports Abroad",
+      b_contact_name:"Casey Flanagan", b_contact_email:"casey@theabsa.com",
+      b_phone:"+1", b_country:"United States", b_website:"https://theabsa.com",
+      b_need:["local_partner","site_inspection"], b_maturity:"concept_dates",
+      b_date_from:"2028-07-01", b_date_to:"2028-07-14",
+      b_group_composition:"30-50, youth teams plus families",
+      b_nationality:"American", b_group_category:"sports",
+      b_arrival_airport:"Kansai", b_departure_airport:"Kansai",
+      b_services:["itinerary","car","activities"],
+      b_themes:["sake_food","history"], b_source:"referral"
+    },
+    mustSee: ["b_group_category","b_need","b_maturity","b_arrival_airport"],
+    mustNotSee: ["b_brief_paste","b_rooms","b_diet","b_guide_language","trip_type"]
   }
 };
 
-/* B2C regression: a consumer must never see a single B2B question */
-const B2C = { party_type:"b2c_self", trip_type:"multi_day" };
+const B2C = { party_type:"b2c_self", trip_type:"multi_day", md_themes:["other"], md_regions:["other"] };
 
-let fail = 0;
-for (const [name, c] of Object.entries(cases)) {
-  const vis = shown(c.answers);
-  const missing = c.mustSee.filter(id => !vis.includes(id));
-  const leaked  = c.mustNotSee.filter(id => vis.includes(id));
-  const unanswered = vis.filter(id => {
-    const q = FLOW.questions.find(x=>x.id===id);
-    return q.required && !truthy(c.answers[id]);
-  });
-  const ok = !missing.length && !leaked.length;
-  if (!ok) fail++;
-  console.log(`${ok?'PASS':'FAIL'}  ${name.padEnd(8)} ${String(vis.length).padStart(2)} questions`);
-  if (missing.length) console.log(`        missing: ${missing.join(', ')}`);
-  if (leaked.length)  console.log(`        leaked : ${leaked.join(', ')}`);
-  if (unanswered.length) console.log(`        note: required but unanswered in fixture: ${unanswered.join(', ')}`);
+let fail=0;
+console.log('flow version', FLOW.version, '·', FLOW.questions.length, 'questions defined\n');
+
+for (const [name,c] of Object.entries(cases)) {
+  const vis=shown(c.answers);
+  const st=steps(c.answers);
+  const missing=c.mustSee.filter(id=>!vis.includes(id));
+  const leaked =c.mustNotSee.filter(id=>vis.includes(id));
+  const ok=!missing.length&&!leaked.length;
+  if(!ok) fail++;
+  console.log(`${ok?'PASS':'FAIL'}  ${name.padEnd(8)} ${String(vis.length).padStart(2)} questions across ${st.length} steps`);
+  console.log(`        steps: ${st.join(' > ')}`);
+  if(missing.length) console.log(`        MISSING: ${missing.join(', ')}`);
+  if(leaked.length)  console.log(`        LEAKED : ${leaked.join(', ')}`);
 }
 
-const b2cLeak = shown(B2C).filter(id => id.startsWith('b_'));
-if (b2cLeak.length) { fail++; console.log(`FAIL  B2C regression: leaked ${b2cLeak.join(', ')}`); }
-else console.log(`PASS  B2C      ${shown(B2C).length} questions, no B2B leakage`);
+/* B2C must never see a B2B question, and its Other fields must work */
+const c=shown(B2C), cSteps=steps(B2C);
+const leak=c.filter(id=>id.startsWith('b_'));
+const others=['md_regions_other','md_themes_other','contact_phone'].filter(id=>!c.includes(id));
+if(leak.length||others.length){ fail++;
+  console.log(`FAIL  B2C      leaked ${leak.join(', ')||'-'} | missing ${others.join(', ')||'-'}`);
+} else {
+  console.log(`PASS  B2C      ${c.length} questions across ${cSteps.length} steps, no B2B leakage`);
+  console.log(`        steps: ${cSteps.join(' > ')}`);
+}
 
-/* every B2B question must be reachable by at least one of the three */
-const allVis = new Set(Object.values(cases).flatMap(c => shown(c.answers)));
-const unreachable = FLOW.questions
-  .filter(q => isInput(q) && q.id.startsWith('b_') && !allVis.has(q.id))
-  .map(q => q.id);
+/* No path should exceed the agreed ceiling, and no step should be a wall */
+const paths={...cases, B2C:{answers:B2C}};
+for(const [n,p] of Object.entries(paths)){
+  const a=p.answers;
+  const per=FLOW.sections
+    .map(s=>FLOW.questions.filter(q=>q.section===s.id&&isInput(q)&&visible(q,a)).length)
+    .filter(x=>x);
+  const worst=Math.max(...per);
+  if(worst>10){ fail++; console.log(`FAIL  ${n}: a step shows ${worst} questions (max 10)`); }
+}
+if(!fail) console.log('\nPASS  no step shows more than 10 questions');
+
+/* every B2B question reachable by at least one fixture */
+const all=new Set(Object.values(cases).flatMap(x=>shown(x.answers)));
+const unreachable=FLOW.questions.filter(q=>isInput(q)&&q.id.startsWith('b_')&&!all.has(q.id)).map(q=>q.id);
 console.log(unreachable.length
-  ? `NOTE  unreachable by all three cases: ${unreachable.join(', ')}`
-  : `PASS  every B2B question reachable by at least one case`);
+  ? `NOTE  not exercised by these three: ${unreachable.join(', ')}`
+  : 'PASS  every B2B question reachable');
 
-process.exit(fail ? 1 : 0);
+process.exit(fail?1:0);

@@ -30,10 +30,12 @@ It argues four things, each visible on screen:
 
 The trade branch adds a fifth: **one tree serves very different buyers.** It branches
 on who is asking, how settled their brief already is, and what they want back — not on
-trip type. Purpose is a single question gating four sub-blocks, so a school study tour,
-a sports exchange and a costed luxury itinerary run through the same engine without any
-of them seeing the others' questions. `test_b2b.js` asserts exactly that against three
-real enquiries.
+trip type. A school study tour, a sports exchange and a costed luxury itinerary run
+through the same engine without any of them seeing the others' questions.
+
+**The form is paginated**, one section at a time. That is deliberate: at 26 questions
+the thing that makes a form feel long on a phone is how many are on screen at once,
+not how many exist. `test_b2b.js` asserts no step ever shows more than ten.
 
 ---
 
@@ -44,7 +46,8 @@ real enquiries.
 | `index.html` | The whole front end — engine, styling, demo fallbacks. No dependencies. |
 | `flow.js` | Every question, and the conditions that show it. **Edit here, not in the engine.** |
 | `n8n-workflow.json` | Reference copy of the backend as it is live. Not deployed from here. |
-| `test_b2b.js` | Coverage test for the B2B branch. `node test_b2b.js`. Uses the real `showIf` evaluator copied from `index.html`. |
+| `test_b2b.js` | Coverage test. `node test_b2b.js`. Uses the real `showIf` evaluator copied from `index.html`, and asserts no step shows more than 10 questions. |
+| `logo-mark.png` | Header mark. |
 
 ## Run it
 

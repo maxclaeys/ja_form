@@ -40,27 +40,52 @@ h1,h2,h3,.u-display{font-family:var(--display);letter-spacing:-.01em}
 
 /* ---------- chrome ---------- */
 .topbar{
-  position:sticky;top:0;z-index:40;background:var(--ink);color:#EDF1F0;
-  border-bottom:1px solid #0E1620;
+  position:sticky;top:0;z-index:40;background:#fff;color:var(--ink);
+  border-bottom:1px solid var(--rule-hard);
 }
 .topbar-in{
-  max-width:1220px;margin:0 auto;padding:11px 22px;
-  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  max-width:1220px;margin:0 auto;padding:9px 22px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
 }
 .brand{
+  display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;
   font-family:var(--display);font-weight:700;font-size:12px;
   text-transform:uppercase;letter-spacing:.16em;
 }
-.brand span{display:block;font-weight:500;font-size:9.5px;color:#8AA3B2;letter-spacing:.2em}
+.brand img{display:block;height:34px;width:auto}
+.brand b{font-weight:700}
+.brand span{display:block;font-weight:500;font-size:9.5px;color:var(--ink-3);letter-spacing:.2em}
 .topbar-note{
-  font-family:var(--mono);font-size:11.5px;color:#8AA3B2;margin-left:auto;
+  font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin-left:auto;
 }
 .pill{
   font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:2px;
-  border:1px solid #35485A;color:#B9CCD6;white-space:nowrap;
+  border:1px solid var(--rule-hard);color:var(--ink-2);white-space:nowrap;
 }
-.pill.live{border-color:var(--sea);color:#9AD0BF}
-.pill.demo{border-color:var(--ochre);color:#E3BC85}
+.pill.live{border-color:var(--sea);color:#2F6F5E}
+.pill.demo{border-color:var(--ochre);color:#8A5A1E}
+
+/* ---------- step navigation ---------- */
+.stepbar{display:flex;align-items:center;gap:12px;margin:0 0 22px}
+.stepbar .track{flex:1;height:4px;background:var(--rule);border-radius:2px;overflow:hidden}
+.stepbar .fill{height:100%;background:var(--indigo);transition:width .25s ease}
+.stepbar .count{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);white-space:nowrap}
+.navrow{margin:26px 0 0;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.btn{
+  border-radius:2px;padding:13px 24px;font-family:var(--display);
+  font-size:15px;font-weight:600;cursor:pointer;
+}
+.btn-next{background:var(--indigo);color:#fff;border:0}
+.btn-next:hover{background:#183F57}
+.btn-back{background:#fff;color:var(--ink-2);border:1px solid var(--rule-hard)}
+.btn-back:hover{border-color:var(--ink-3)}
+.navrow .why{font-size:14.5px;color:var(--ink-2);max-width:38ch}
+.navrow .why.is-bad{color:var(--flag)}
+.multi-note{
+  display:inline-block;font-family:var(--mono);font-size:11px;color:var(--ink-3);
+  border:1px solid var(--rule);border-radius:2px;padding:1px 7px;margin:0 0 8px;
+}
+.q.is-missing{border-color:var(--flag);background:var(--flag-soft)}
 
 /* ---------- layout ---------- */
 .wrap{max-width:1220px;margin:0 auto;padding:0 22px 90px;
@@ -266,7 +291,10 @@ pre.json{
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand">Japan Adventurer<span>Requirements capture</span></div>
+    <a class="brand" href="https://japanadventurer.com" target="_blank" rel="noopener">
+      <img src="logo-mark.png" alt="Japan Adventurer" width="256" height="256">
+      <span><b>Japan Adventurer</b><span>Requirements capture</span></span>
+    </a>
     <span class="pill" id="mode-pill">checking backend…</span>
     <span class="topbar-note">Prototype — not a live enquiry form</span>
   </div>
@@ -280,9 +308,15 @@ pre.json{
   </div>
 
   <main class="sheet">
+    <div class="stepbar" id="stepbar" hidden>
+      <div class="track"><div class="fill" id="step-fill"></div></div>
+      <span class="count" id="step-count"></span>
+    </div>
     <div id="form"></div>
-    <div class="actions">
-      <button class="send" id="send" disabled>Send this to Japan Adventurer</button>
+    <div class="navrow" id="navrow">
+      <button class="btn btn-back" id="back" hidden>Back</button>
+      <button class="btn btn-next" id="next" hidden>Next</button>
+      <button class="send" id="send" disabled hidden>Send this to Japan Adventurer</button>
       <span class="why" id="send-why"></span>
     </div>
     <div id="handoff"></div>
@@ -355,7 +389,7 @@ pre.json{
 
 const FLOW = window.JA_FLOW;
 const API  = new URLSearchParams(location.search).get('api') || window.JA_DEFAULT_API || '';
-const state = { answers:{}, ai:{}, flags:{}, busy:{}, sent:false };
+const state = { answers:{}, ai:{}, flags:{}, busy:{}, sent:false, step:0, showMissing:false };
 
 /* ---------------------------------------------------------------------
    DEMO CONTENT — replaces the model when no backend is attached.
@@ -539,43 +573,99 @@ function el(tag,cls,html){
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function paras(t){return String(t).split(/\n{2,}/).map(p=>`<p>${esc(p)}</p>`).join('')}
 
+/* Sections that currently have at least one visible question. This is the
+   pagination spine: one of these on screen at a time. Nagi's note was that the
+   form reads as endless on a phone, and at 26 questions the fix is how many are
+   on screen at once, not only how many exist. */
+function liveSections(shown){
+  return FLOW.sections
+    .map(sec=>({sec, qs:shown.filter(q=>q.section===sec.id)}))
+    .filter(g=>g.qs.length);
+}
+
 function render(){
   const a=state.answers;
   const shown=FLOW.questions.filter(q=>visible(q,a));
+  const groups=liveSections(shown);
   const form=document.getElementById('form');
   form.textContent='';
 
-  let si=0;
-  FLOW.sections.forEach(sec=>{
-    const qs=shown.filter(q=>q.section===sec.id);
-    if(!qs.length) return;
-    si++;
+  if(state.step>=groups.length) state.step=Math.max(0,groups.length-1);
+  if(state.step<0) state.step=0;
+  const g=groups[state.step];
+
+  if(g){
+    const n=g.qs.filter(isInput).length;
     const fs=el('fieldset','section');
     const head=el('div','section-head');
     head.append(
-      el('span','section-idx',String(si).padStart(2,'0')),
-      el('h2',null,esc(sec.label)),
-      el('span','section-count',qs.filter(isInput).length+(qs.filter(isInput).length===1?' question':' questions'))
+      el('span','section-idx',String(state.step+1).padStart(2,'0')),
+      el('h2',null,esc(g.sec.label)),
+      el('span','section-count',n+(n===1?' question':' questions'))
     );
     fs.append(head);
-    qs.forEach(q=>fs.append(card(q)));
+    g.qs.forEach(q=>fs.append(card(q)));
     form.append(fs);
-  });
+  }
 
+  paintSteps(groups);
   paintRail(shown);
-  paintSend(shown);
+  paintSend(shown,groups);
   if(state.sent) paintHandoff(shown);
+}
+
+function paintSteps(groups){
+  const bar=document.getElementById('stepbar');
+  const many=groups.length>1;
+  bar.hidden=!many;
+  if(many){
+    document.getElementById('step-fill').style.width=
+      Math.round((state.step+1)/groups.length*100)+'%';
+    document.getElementById('step-count').textContent=
+      'Step '+(state.step+1)+' of '+groups.length;
+  }
+}
+
+/* Required questions still open on the step being shown. Advancing is blocked
+   on these; the send button is blocked on the whole form. */
+function stepMissing(groups){
+  const g=groups[state.step];
+  if(!g) return [];
+  return g.qs.filter(q=>isInput(q)&&q.required&&!truthy(state.answers[q.id]));
+}
+
+function goStep(d){
+  const shown=FLOW.questions.filter(q=>visible(q,state.answers));
+  const groups=liveSections(shown);
+  if(d>0){
+    const miss=stepMissing(groups);
+    if(miss.length){
+      state.showMissing=true;
+      render();
+      const first=document.querySelector('.q.is-missing');
+      if(first) first.scrollIntoView({block:'center',behavior:'smooth'});
+      return;
+    }
+  }
+  state.showMissing=false;
+  state.step+=d;
+  render();
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
 function card(q){
   const a=state.answers, v=a[q.id];
-  const c=el('div','q'+(q.type==='notice'?' is-notice':'')+(state.flags[q.id]?' is-flagged':''));
+  const isMissing=state.showMissing&&isInput(q)&&q.required&&!truthy(v);
+  const c=el('div','q'+(q.type==='notice'?' is-notice':'')+(state.flags[q.id]?' is-flagged':'')+(isMissing?' is-missing':''));
   c.dataset.q=q.id;
 
   if(q.type!=='notice') c.append(el('span','q-key',esc(q.id)));
   c.append(el('span','q-label',esc(q.label)+(q.required?' <span class="req">*</span>':'')));
   if(q.hint) c.append(el('p','q-hint',esc(q.hint)));
   if(q.body) c.append(el('p',null,esc(q.body)));
+  /* Nagi: multi-select was not obvious. Done in the engine so every multi
+     question gets it, rather than editing 16 labels by hand. */
+  if(q.type==='multi') c.append(el('span','multi-note','select all that apply'));
 
   if(q.type==='choice'){
     const box=el('div','opts'+(q.options.length>4?' is-wide':''));
@@ -746,18 +836,41 @@ function paintRail(shown){
 function requiredMissing(shown){
   return shown.filter(q=>isInput(q)&&q.required&&!truthy(state.answers[q.id]));
 }
-function paintSend(shown){
+function paintSend(shown,groups){
   const missing=requiredMissing(shown);
   const flags=Object.keys(state.flags).length;
   const btn=document.getElementById('send');
+  const back=document.getElementById('back');
+  const next=document.getElementById('next');
   const why=document.getElementById('send-why');
-  const noPath=!truthy(state.answers.trip_type);
+
+  const last=state.step>=groups.length-1;
+  /* Either branch counts as having chosen a path. The old check looked only at
+     trip_type, so a trade enquiry could never enable the send button. */
+  const noPath=!truthy(state.answers.trip_type)&&!truthy(state.answers.party_type);
+
+  back.hidden=state.step===0;
+  next.hidden=last;
+  btn.hidden=!last;
   btn.disabled=noPath||missing.length>0;
+  why.classList.remove('is-bad');
+
+  const stepMiss=stepMissing(groups);
+  if(!last){
+    why.textContent = state.showMissing&&stepMiss.length
+      ? stepMiss.length+' still needed on this step: '+stepMiss.slice(0,2).map(q=>q.label.toLowerCase()).join('; ')+(stepMiss.length>2?'…':'')
+      : '';
+    if(state.showMissing&&stepMiss.length) why.classList.add('is-bad');
+    return;
+  }
   if(noPath){ why.textContent='Choose a trip shape to begin.' }
   else if(missing.length){ why.textContent=missing.length+' required '+(missing.length===1?'answer is':'answers are')+' still open: '+missing.slice(0,3).map(q=>q.label.toLowerCase()).join('; ')+(missing.length>3?'…':'') }
   else if(flags){ why.textContent='You can send this, but there '+(flags===1?'is 1 point':'are '+flags+' points')+' worth correcting first.' }
   else { why.textContent='Nothing outstanding.' }
 }
+
+document.getElementById('next').addEventListener('click',()=>goStep(1));
+document.getElementById('back').addEventListener('click',()=>goStep(-1));
 
 document.getElementById('send').addEventListener('click',async()=>{
   state.sent=true; render();
