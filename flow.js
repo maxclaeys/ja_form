@@ -27,7 +27,7 @@
    ------------------------------------------------------------------ */
 
 window.JA_FLOW = {
-  version: "0.6",
+  version: "0.7",
   title: "Tell us what you are looking for",
   intro:
     "The questions adapt as you go, so you should only see what applies to your enquiry. If a question is hard to answer, ask about it and we will answer it here.",
@@ -628,8 +628,9 @@ window.JA_FLOW = {
       id: "b_brief_paste",
       section: "b_ask",
       label: "Your itinerary or brief",
-      hint: "Paste it here, or give us a link to a file. Anything you have already written is better than retyping it.",
+      hint: "Paste it here, or attach the file. Anything you have already written is better than retyping it.",
       type: "longtext",
+      attach: true,
       showIf: { all: [{ q: "b_maturity", in: ["fixed_itinerary", "prior_itinerary"] }] },
       required: true
     },
@@ -703,9 +704,7 @@ window.JA_FLOW = {
       type: "text",
       placeholder: "Kansai",
       showIf: { all: [{ q: "b_maturity", answered: true }] },
-      required: true,
-      assist: true,
-      assistLabel: "Which airport should we route into?"
+      required: true
     },
     {
       id: "b_departure_airport",
